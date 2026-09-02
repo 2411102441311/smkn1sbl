@@ -159,8 +159,8 @@ class PpdbWizardController extends Controller
 
         $wizardToken = $this->wizardData()['token'] ?? ($this->wizardData()['token'] = (string) Str::uuid());
 
-        $reportCards = [];
-        $gradesPerSubject = [];
+        $reportCards = [];       // detail per foto (buat disimpan semua ke database nanti)
+        $gradesPerSubject = [];  // kumpulan nilai per mapel dari SEMUA foto, buat dirata-ratakan
 
         foreach ($request->file('report_cards') as $index => $file) {
             $path = $file->storeAs(
@@ -169,36 +169,14 @@ class PpdbWizardController extends Controller
                 'public'
             );
 
-            $absolutePath = storage_path('app/public/' . $path);
-
-            // ===== DEBUG: catat info dasar sebelum coba OCR =====
-            \Illuminate\Support\Facades\Log::info('PPDB OCR DEBUG: mulai proses foto', [
-                'path' => $path,
-                'absolute_path' => $absolutePath,
-                'file_exists' => file_exists($absolutePath) ? 'YA' : 'TIDAK ADA',
-                'file_size' => file_exists($absolutePath) ? filesize($absolutePath) . ' bytes' : '-',
-            ]);
-
             $ocrData = ['raw_text' => '', 'grades' => [], 'confidence' => 0];
 
             try {
-                $ocrData = $ocrService->extractFromPath($absolutePath);
-
-                // ===== DEBUG: catat hasil OCR mentah =====
-                \Illuminate\Support\Facades\Log::info('PPDB OCR DEBUG: hasil ekstraksi', [
-                    'raw_text_length' => strlen($ocrData['raw_text']),
-                    'raw_text_preview' => substr($ocrData['raw_text'], 0, 500),
-                    'grades_found' => $ocrData['grades'],
-                    'confidence' => $ocrData['confidence'],
-                ]);
+                $ocrData = $ocrService->extractFromPath(storage_path('app/public/' . $path));
             } catch (\Throwable $e) {
-                // ===== DEBUG: catat exception LENGKAP kalau gagal =====
-                \Illuminate\Support\Facades\Log::error('PPDB OCR DEBUG: GAGAL total', [
-                    'message' => $e->getMessage(),
-                    'file' => $e->getFile(),
-                    'line' => $e->getLine(),
-                ]);
                 report($e);
+                // OCR gagal untuk foto ini — tetap lanjut ke foto berikutnya,
+                // siswa bisa isi manual di langkah konfirmasi.
             }
 
             $reportCards[] = [
@@ -209,25 +187,28 @@ class PpdbWizardController extends Controller
                 'confidence' => $ocrData['confidence'],
             ];
 
+            // Kumpulkan tiap nilai yang ketemu per mapel (dari semester manapun)
             foreach ($ocrData['grades'] as $subject => $value) {
                 $gradesPerSubject[$subject][] = $value;
             }
         }
 
+        // Rata-ratakan nilai tiap mapel dari semua semester yang berhasil terbaca
         $averagedGrades = [];
         foreach ($gradesPerSubject as $subject => $values) {
             $averagedGrades[$subject] = round(array_sum($values) / count($values), 2);
         }
 
+        // Confidence keseluruhan = rata-rata confidence semua foto
         $overallConfidence = count($reportCards) > 0
             ? round(array_sum(array_column($reportCards, 'confidence')) / count($reportCards), 2)
             : 0;
 
         $this->putWizardData([
             'token' => $wizardToken,
-            'report_cards' => $reportCards,
+            'report_cards' => $reportCards,   // detail lengkap tiap foto, dipakai saat submit final
             'ocr_confidence' => $overallConfidence,
-            'grades' => $averagedGrades,
+            'grades' => $averagedGrades,       // nilai gabungan (rata-rata), akan dikonfirmasi di langkah berikut
         ]);
 
         return redirect()->route('ppdb.wizard.ocrReview');
