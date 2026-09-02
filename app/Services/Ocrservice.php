@@ -100,8 +100,8 @@ class OcrService
             $tesseract = new TesseractOCR($imagePath);
 
             $tesseract
-                ->executable('D:\Program Files\Tesseract-OCR\tesseract.exe')
-                ->tessdataDir('D:\Program Files\Tesseract-OCR\tessdata')
+                ->executable('C:\Program Files\Tesseract-OCR\tesseract.exe')
+                ->tessdataDir('C:\Program Files\Tesseract-OCR\tessdata')
                 ->lang('ind', 'eng')
                 ->psm(11);
 
