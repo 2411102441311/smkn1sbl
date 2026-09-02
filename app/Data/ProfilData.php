@@ -51,21 +51,25 @@ class ProfilData
                     'Kaprog TKJ', 'Kaprog TKR', 'Kaprog AKL', 'Kaprog Tata Boga', 'Kaprog Multimedia', 'Kaprog ATP',
                 ],
             ],
+            // Catatan privasi: field 'nip' sengaja DISIMPAN di data ini untuk keperluan arsip/administrasi
+            // internal, tapi TIDAK ditampilkan di halaman publik (lihat resources/views/profil.blade.php).
+            // Field 'foto': isi nama file foto yang sudah kamu taruh di public/images/guru/{nama file}.
+            // Kalau field 'foto' dikosongkan ('') atau filenya belum ada, otomatis fallback ke ikon avatar.
             'guru' => [
-                ['nama' => 'Siti Rahmawati, S.Pd.', 'jabatan' => 'Guru Matematika / Waka Kurikulum'],
-                ['nama' => 'Budi Santoso, S.Pd.', 'jabatan' => 'Guru BK / Waka Kesiswaan'],
-                ['nama' => 'Herman, S.T.', 'jabatan' => 'Guru Produktif TKJ'],
-                ['nama' => 'Yusuf Hidayat, S.Pd.', 'jabatan' => 'Guru Produktif TKR'],
-                ['nama' => 'Nurul Aini, S.Pd.', 'jabatan' => 'Guru Bahasa Indonesia'],
-                ['nama' => 'Ratna Sari, S.Pd.', 'jabatan' => 'Guru Produktif Tata Boga'],
-                ['nama' => 'Agus Prasetyo, S.Kom.', 'jabatan' => 'Guru Produktif Multimedia'],
-                ['nama' => 'Dewi Lestari, S.P.', 'jabatan' => 'Guru Produktif ATP'],
+                ['nama' => 'Suklisnawati, S.Pd.', 'jabatan' => 'Guru Matematika', 'nip' => '', 'public/images/guru/suklisnawati.jpeg' => 'suklisnawati.jpeg'],
+                ['nama' => 'Budi Santoso, S.Pd.', 'jabatan' => 'Guru BK / Waka Kesiswaan', 'nip' => '', 'foto' => 'budi-santoso.jpg'],
+                ['nama' => 'Herman, S.T.', 'jabatan' => 'Guru Produktif TKJ', 'nip' => '', 'foto' => 'herman.jpg'],
+                ['nama' => 'Yusuf Hidayat, S.Pd.', 'jabatan' => 'Guru Produktif TKR', 'nip' => '', 'foto' => 'yusuf-hidayat.jpg'],
+                ['nama' => 'Nurul Aini, S.Pd.', 'jabatan' => 'Guru Bahasa Indonesia', 'nip' => '', 'foto' => 'nurul-aini.jpg'],
+                ['nama' => 'Ratna Sari, S.Pd.', 'jabatan' => 'Guru Produktif Tata Boga', 'nip' => '', 'foto' => 'ratna-sari.jpg'],
+                ['nama' => 'Agus Prasetyo, S.Kom.', 'jabatan' => 'Guru Produktif Multimedia', 'nip' => '', 'foto' => 'agus-prasetyo.jpg'],
+                ['nama' => 'Dewi Lestari, S.P.', 'jabatan' => 'Guru Produktif ATP', 'nip' => '', 'foto' => 'dewi-lestari.jpg'],
             ],
             'tendik' => [
-                ['nama' => 'Muhammad Iqbal', 'jabatan' => 'Kepala Tata Usaha'],
-                ['nama' => 'Fitriani', 'jabatan' => 'Staf Administrasi'],
-                ['nama' => 'Sukirno', 'jabatan' => 'Petugas Perpustakaan'],
-                ['nama' => 'Aditya Pratama', 'jabatan' => 'Teknisi Laboratorium'],
+                ['nama' => 'Muhammad Iqbal', 'jabatan' => 'Kepala Tata Usaha', 'nip' => '', 'foto' => 'muhammad-iqbal.jpg'],
+                ['nama' => 'Fitriani', 'jabatan' => 'Staf Administrasi', 'nip' => '', 'foto' => 'fitriani.jpg'],
+                ['nama' => 'Sukirno', 'jabatan' => 'Petugas Perpustakaan', 'nip' => '', 'foto' => 'sukirno.jpg'],
+                ['nama' => 'Aditya Pratama', 'jabatan' => 'Teknisi Laboratorium', 'nip' => '', 'foto' => 'aditya-pratama.jpg'],
             ],
         ];
     }

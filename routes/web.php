@@ -50,6 +50,12 @@ use App\Http\Controllers\Reporting\ReportController;
 */
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/profil', [SchoolProfileController::class, 'index'])->name('profil');
+Route::get('/guru', [SchoolProfileController::class, 'teachers'])->name('guru');
+Route::get('/prestasi', [SchoolProfileController::class, 'achievements'])->name('prestasi');
+Route::get('/ekstrakurikuler', [SchoolProfileController::class, 'extracurriculars'])->name('ekstrakurikuler');
+Route::get('/struktur-organisasi', [SchoolProfileController::class, 'orgStructure'])->name('struktur-organisasi');
+
+Route::get('/jurusan', [MajorController::class, 'index'])->name('jurusan.index');
 Route::get('/jurusan/{slug}', [MajorController::class, 'show'])->name('jurusan.show');
 
 Route::get('/storage/{path}', function (string $path) {

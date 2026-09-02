@@ -1,28 +1,43 @@
 @extends('layouts.app')
 
-@section('title', 'Jurusan — SMK Negeri 1 Sebulu')
-@section('description', 'Daftar lengkap kompetensi keahlian (jurusan) yang tersedia di SMK Negeri 1 Sebulu.')
+@section('title', 'Program Keahlian — ' . $schoolName)
+@section('description', 'Daftar program keahlian (jurusan) yang tersedia di ' . $schoolName . '.')
 
 @section('content')
 
-  @include('partials.page-header', ['title' => 'Kompetensi Keahlian', 'eyebrow' => 'Jurusan', 'subtitle' => 'Enam program keahlian yang dirancang bersama mitra industri agar lulusan siap kerja sejak hari pertama.'])
+  @include('partials.page-header', [
+      'title' => 'Program Keahlian',
+      'eyebrow' => 'Jurusan Kami',
+      'subtitle' => $schoolName . ' memiliki beberapa program keahlian unggulan yang dirancang sesuai kebutuhan dunia kerja dan industri.',
+  ])
 
-  <section class="section-pad" style="background:var(--cream);">
+  <section class="jurusan section-pad" style="background:var(--paper);">
     <div class="wrap">
-      <div class="jurusan-grid jurusan-grid-full">
-        @foreach($jurusan as $j)
-          <div class="jur-card reveal" style="--bar:var(--{{ $j['color'] }}-600)">
-            <span class="jur-num">{{ $j['code'] }}</span>
-            <div class="jur-icon"><i class="fa-solid {{ $j['icon'] }}"></i></div>
-            <h3>{{ $j['title'] }}</h3>
-            <p>{{ $j['desc'] }}</p>
-            <div class="jur-prospek">
-              @foreach(array_slice($j['prospek'], 0, 2) as $p)
-                <span class="mini-tag">{{ $p }}</span>
-              @endforeach
-            </div>
-            <a href="{{ route('jurusan.show', $j['slug']) }}" class="more">Lihat detail jurusan <i class="fa-solid fa-arrow-right"></i></a>
-          </div>
+      <div class="section-head reveal">
+        <div class="eyebrow">Program Keahlian</div>
+        <h2>Pilih Jurusan Sesuai Minatmu</h2>
+        <p>Klik salah satu jurusan untuk melihat detail kompetensi, fasilitas, dan prospek kerjanya.</p>
+      </div>
+
+      @php
+        // Warna --bar dirotasi per kartu biar variatif (dibaca .jur-card::before dan .jur-icon di app.css)
+        $barColors = ['var(--green-600)', 'var(--gold-600)', 'var(--navy-700)'];
+        $iconMap = ['network' => 'network-wired', 'briefcase' => 'briefcase', 'leaf' => 'leaf'];
+      @endphp
+
+      <div class="jurusan-grid">
+        @foreach($majors as $i => $m)
+          @php
+            $bar = $barColors[$i % count($barColors)];
+            $faIcon = $iconMap[$m['icon']] ?? 'graduation-cap';
+          @endphp
+          <a href="{{ route('jurusan.show', $m['slug']) }}" class="jur-card reveal" style="--bar:{{ $bar }};">
+            <span class="jur-num">SPEK. {{ str_pad($i + 1, 2, '0', STR_PAD_LEFT) }} / {{ $m['code'] }}</span>
+            <div class="jur-icon"><i class="fa-solid fa-{{ $faIcon }}"></i></div>
+            <h3>{{ $m['name'] }}</h3>
+            <p>{{ $m['desc'] }}</p>
+            <span class="more">Lihat Detail <i class="fa-solid fa-arrow-right"></i></span>
+          </a>
         @endforeach
       </div>
     </div>

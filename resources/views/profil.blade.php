@@ -127,12 +127,19 @@
 
             <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
                 @foreach($teachers as $teacher)
+                    @php
+                        $teacherPhoto = !empty($teacher['foto']) ? asset('images/guru/' . $teacher['foto']) : null;
+                    @endphp
                     <div class="bg-white rounded-2xl border border-skblue-100 p-5 text-center hover:shadow-soft hover:-translate-y-1 transition-all duration-200 reveal reveal-delay-{{ $loop->iteration % 4 }}">
-                        <div class="w-16 h-16 rounded-full bg-skblue-100 mx-auto mb-3 flex items-center justify-center">
-                            <svg class="w-8 h-8 text-skblue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                            </svg>
-                        </div>
+                        @if($teacherPhoto)
+                            <img src="{{ $teacherPhoto }}" alt="{{ $teacher['name'] }}" class="w-16 h-16 rounded-full object-cover border-2 border-white shadow-sm mx-auto mb-3">
+                        @else
+                            <div class="w-16 h-16 rounded-full bg-skblue-100 mx-auto mb-3 flex items-center justify-center">
+                                <svg class="w-8 h-8 text-skblue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                </svg>
+                            </div>
+                        @endif
                         <p class="font-display font-semibold text-slate-800 text-sm">{{ $teacher['name'] }}</p>
                         <p class="text-xs text-skblue-500 mt-1">{{ $teacher['subject'] }}</p>
                     </div>

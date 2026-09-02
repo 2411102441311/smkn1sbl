@@ -39,15 +39,20 @@ class SchoolProfileController extends Controller
             ['role' => 'Guru & Tenaga Kependidikan', 'level' => 4],
         ];
 
+        // Catatan privasi: field 'nip' sengaja DISIMPAN di data ini untuk keperluan arsip/administrasi
+        // internal, tapi TIDAK ditampilkan di halaman publik (lihat resources/views/profil.blade.php).
+        // Field 'foto' berisi nama file yang ada di public/images/guru/{nama file}.
+        // Kalau field 'foto' kosong atau filenya belum ada, otomatis fallback ke ikon avatar.
         $teachers = [
-            ['name' => 'Nama Guru 1, S.Pd.', 'subject' => 'Matematika'],
-            ['name' => 'Nama Guru 2, S.Kom.', 'subject' => 'Pemrograman Web (RPL)'],
-            ['name' => 'Nama Guru 3, S.Pd.', 'subject' => 'Bahasa Indonesia'],
-            ['name' => 'Nama Guru 4, S.T.', 'subject' => 'Jaringan Komputer (TKJ)'],
-            ['name' => 'Nama Guru 5, S.Pd.', 'subject' => 'Bahasa Inggris'],
-            ['name' => 'Nama Guru 6, S.Pd.', 'subject' => 'Teknik Kendaraan Ringan'],
-            ['name' => 'Nama Guru 7, S.E.', 'subject' => 'Akuntansi'],
-            ['name' => 'Nama Guru 8, S.Sn.', 'subject' => 'Desain Komunikasi Visual'],
+            ['name' => 'Suklisnawati, S.Pd.', 'subject' => 'Matematika', 'nip' => '', 'foto' => 'suklisnawati.jpeg'],
+            ['name' => 'Rofii Hamdi, S.Pd.', 'subject' => 'Matematika', 'nip' => '', 'foto' => 'rofii-hamdi.jpeg'],
+            ['name' => 'Nama Guru 2, S.Kom.', 'subject' => 'Pemrograman Web (RPL)', 'nip' => '', 'foto' => null],
+            ['name' => 'Nama Guru 3, S.Pd.', 'subject' => 'Bahasa Indonesia', 'nip' => '', 'foto' => null],
+            ['name' => 'Nama Guru 4, S.T.', 'subject' => 'Jaringan Komputer (TKJ)', 'nip' => '', 'foto' => null],
+            ['name' => 'Nama Guru 5, S.Pd.', 'subject' => 'Bahasa Inggris', 'nip' => '', 'foto' => null],
+            ['name' => 'Nama Guru 6, S.Pd.', 'subject' => 'Teknik Kendaraan Ringan', 'nip' => '', 'foto' => null],
+            ['name' => 'Nama Guru 7, S.E.', 'subject' => 'Akuntansi', 'nip' => '', 'foto' => null],
+            ['name' => 'Nama Guru 8, S.Sn.', 'subject' => 'Desain Komunikasi Visual', 'nip' => '', 'foto' => null],
         ];
 
         $achievements = [
@@ -60,12 +65,12 @@ class SchoolProfileController extends Controller
         $extracurriculars = [
             ['name' => 'Pramuka', 'icon' => 'flag'],
             ['name' => 'OSIS', 'icon' => 'users'],
-            ['name' => 'Futsal', 'icon' => 'circle'],
-            ['name' => 'Basket', 'icon' => 'circle'],
+            ['name' => 'Futsal', 'icon' => 'futbol'],
+            ['name' => 'Basket', 'icon' => 'basketball'],
             ['name' => 'Paskibra', 'icon' => 'flag'],
             ['name' => 'Rohis', 'icon' => 'book'],
             ['name' => 'PMR', 'icon' => 'heart'],
-            ['name' => 'Robotik', 'icon' => 'cpu'],
+            ['name' => 'Robotik', 'icon' => 'microchip'],
         ];
 
         return view('profil', compact(
