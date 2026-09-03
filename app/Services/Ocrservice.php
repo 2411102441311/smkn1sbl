@@ -137,257 +137,157 @@ class OcrService
      * 2. Nilai beberapa baris setelah nama mapel.
      * 3. Nilai sebelum nama mapel.
      */
-    protected function parseGrades(string $text): array
-    {
-        $results = [];
 
-        if (trim($text) === '') {
-            return $results;
+    private function parseGrades(string $text): array
+{
+    $subjects = [
+        'Matematika',
+        'Bahasa Indonesia',
+        'Bahasa Inggris',
+        'IPA',
+        'IPS',
+    ];
+
+    // Normalisasi teks OCR
+    $text = str_replace(["\r\n", "\r"], "\n", $text);
+    $text = preg_replace('/[ \t]+/', ' ', $text);
+
+    $lines = array_values(array_filter(
+        array_map('trim', explode("\n", $text)),
+        fn ($line) => $line !== ''
+    ));
+
+    $grades = [];
+
+    foreach ($subjects as $subject) {
+        $subjectKey = strtolower($subject);
+        $foundGrade = null;
+
+        /*
+         * ============================================================
+         * 1. CARI MAPEL DAN NILAI DI BARIS YANG SAMA
+         * Contoh:
+         * Matematika 85
+         * Bahasa Indonesia 87
+         * ============================================================
+         */
+        foreach ($lines as $index => $line) {
+            $normalizedLine = strtolower($line);
+
+            if (!str_contains($normalizedLine, $subjectKey)) {
+                continue;
+            }
+
+            // Ambil angka setelah nama mapel
+            $afterSubject = substr(
+                $line,
+                stripos($line, $subject)
+            );
+
+            $grade = $this->findGradeInText($afterSubject);
+
+            if ($grade !== null) {
+                $foundGrade = $grade;
+                break;
+            }
         }
 
-        $lines = preg_split(
-            '/\r\n|\r|\n/',
-            $text
-        );
-
-        foreach ($this->subjects as $subject) {
-
+        /*
+         * ============================================================
+         * 2. KALAU TIDAK KETEMU, CARI DI SEKITAR POSISI MAPEL
+         *
+         * Karena OCR tabel sering jadi seperti:
+         *
+         * Matematika
+         * 85
+         *
+         * atau:
+         *
+         * Matematika
+         * Keterangan
+         * 85
+         *
+         * ============================================================
+         */
+        if ($foundGrade === null) {
             foreach ($lines as $index => $line) {
-
-                if (stripos($line, $subject) === false) {
+                if (!str_contains(strtolower($line), $subjectKey)) {
                     continue;
                 }
 
-                $value = null;
+                // Cari sampai 8 baris setelah nama mapel
+                for ($offset = 1; $offset <= 8; $offset++) {
+                    $nextIndex = $index + $offset;
 
-                /*
-                 * =====================================================
-                 * POLA 1
-                 * Nama mapel dan nilai berada pada baris yang sama.
-                 *
-                 * Contoh:
-                 *
-                 * Matematika (Umum) 87
-                 * =====================================================
-                 */
-
-                $subjectPosition = stripos($line, $subject);
-
-                $afterSubject = substr(
-                    $line,
-                    $subjectPosition + strlen($subject)
-                );
-
-                $value = $this->findGradeInText($afterSubject);
-
-                /*
-                 * =====================================================
-                 * POLA 2
-                 * Nilai berada beberapa baris SETELAH nama mapel.
-                 *
-                 * Contoh OCR:
-                 *
-                 * Bahasa Indonesia
-                 *
-                 * 90
-                 * =====================================================
-                 */
-
-                if ($value === null) {
-
-                    for ($offset = 1; $offset <= 12; $offset++) {
-
-                        if (!isset($lines[$index + $offset])) {
-                            break;
-                        }
-
-                        $nextLine = trim(
-                            $lines[$index + $offset]
-                        );
-
-                        if ($nextLine === '') {
-                            continue;
-                        }
-
-                        /*
-                         * Kalau menemukan mapel lain,
-                         * jangan mengambil nilai milik mapel tersebut.
-                         */
-                        if ($this->containsAnotherSubject(
-                            $nextLine,
-                            $subject
-                        )) {
-                            break;
-                        }
-
-                        $value = $this->findGradeInText(
-                            $nextLine
-                        );
-
-                        if ($value !== null) {
-                            break;
-                        }
+                    if (!isset($lines[$nextIndex])) {
+                        break;
                     }
-                }
 
-                /*
-                 * =====================================================
-                 * POLA 3
-                 * Nilai berada SEBELUM nama mapel.
-                 *
-                 * Contoh OCR:
-                 *
-                 * 90
-                 *
-                 * Bahasa Indonesia
-                 *
-                 * =====================================================
-                 */
+                    $candidate = $lines[$nextIndex];
 
-                if ($value === null) {
-
-                    for ($offset = 1; $offset <= 12; $offset++) {
-
-                        if (!isset($lines[$index - $offset])) {
-                            break;
-                        }
-
-                        $previousLine = trim(
-                            $lines[$index - $offset]
-                        );
-
-                        if ($previousLine === '') {
-                            continue;
-                        }
-
-                        if ($this->containsAnotherSubject(
-                            $previousLine,
-                            $subject
-                        )) {
-                            break;
-                        }
-
-                        $value = $this->findGradeInText(
-                            $previousLine
-                        );
-
-                        if ($value !== null) {
-                            break;
-                        }
+                    // Jangan masuk ke mapel lain
+                    if ($this->containsAnotherSubject($candidate, $subjects, $subject)) {
+                        break;
                     }
-                }
 
-                /*
-                 * Kalau nilai ditemukan, simpan.
-                 */
-                if ($value !== null) {
+                    $grade = $this->findGradeInText($candidate);
 
-                    $results[$subject] = $value;
-
-                    break;
+                    if ($grade !== null) {
+                        $foundGrade = $grade;
+                        break 2;
+                    }
                 }
             }
         }
 
-        return $results;
-    }
-
-    /**
-     * Cari angka yang masuk akal sebagai nilai rapor.
-     *
-     * Hanya nilai 60-100 yang diprioritaskan supaya nomor:
-     *
-     * - nomor mapel
-     * - nomor halaman
-     * - tahun
-     * - nomor peserta
-     *
-     * tidak mudah dianggap sebagai nilai.
-     */
-    protected function findGradeInText(string $text): ?float
-    {
         /*
-         * Mendukung:
+         * ============================================================
+         * 3. KALAU MASIH TIDAK KETEMU, CARI SEBELUM MAPEL
          *
-         * 90
-         * 90,00
-         * 90.00
+         * Beberapa layout tabel ketika di-OCR bisa membuat:
+         *
+         * 85
+         * Matematika
+         *
+         * ============================================================
          */
-        preg_match_all(
-            '/\b(\d{1,3})(?:[,.]\d{1,2})?\b/',
-            $text,
-            $matches
-        );
+        if ($foundGrade === null) {
+            foreach ($lines as $index => $line) {
+                if (!str_contains(strtolower($line), $subjectKey)) {
+                    continue;
+                }
 
-        foreach ($matches[1] as $number) {
+                for ($offset = 1; $offset <= 5; $offset++) {
+                    $prevIndex = $index - $offset;
 
-            $number = (float) $number;
+                    if ($prevIndex < 0) {
+                        break;
+                    }
 
-            if ($number >= 60 && $number <= 100) {
-                return $number;
+                    $candidate = $lines[$prevIndex];
+
+                    if ($this->containsAnotherSubject($candidate, $subjects, $subject)) {
+                        break;
+                    }
+
+                    $grade = $this->findGradeInText($candidate);
+
+                    if ($grade !== null) {
+                        $foundGrade = $grade;
+                        break 2;
+                    }
+                }
             }
         }
 
-        return null;
-    }
-
-    /**
-     * Cek apakah baris mengandung nama mapel lain.
-     */
-    protected function containsAnotherSubject(
-        string $line,
-        string $currentSubject
-    ): bool {
-        foreach ($this->subjects as $subject) {
-
-            if (
-                $subject !== $currentSubject &&
-                stripos($line, $subject) !== false
-            ) {
-                return true;
-            }
+        if ($foundGrade !== null) {
+            $grades[$subject] = $foundGrade;
         }
-
-        return false;
     }
 
-    /**
-     * Hitung confidence berdasarkan 5 mapel inti.
-     *
-     * 1 mapel = 20%
-     * 2 mapel = 40%
-     * 3 mapel = 60%
-     * 4 mapel = 80%
-     * 5 mapel = 100%
-     */
-    protected function estimateConfidence(
-        array $extractedGrades
-    ): float {
-        $coreSubjects = [
-            'Matematika',
-            'Bahasa Indonesia',
-            'Bahasa Inggris',
-            'IPA',
-            'IPS',
-        ];
-
-        $foundCore = count(
-            array_intersect_key(
-                $extractedGrades,
-                array_flip($coreSubjects)
-            )
-        );
-
-        return round(
-            ($foundCore / count($coreSubjects)) * 100,
-            2
-        );
-    }
-
-    /**
-     * Daftar mapel yang ditampilkan pada halaman
-     * konfirmasi nilai.
-     */
+    return $grades;
+}
+    
     public function getSubjects(): array
     {
         return [
@@ -398,4 +298,45 @@ class OcrService
             'IPS',
         ];
     }
+}
+
+private function findGradeInText(string $text): ?float
+{
+    preg_match_all(
+        '/(?<!\d)(\d{1,3})(?:[,.](\d{1,2}))?(?!\d)/',
+        $text,
+        $matches,
+        PREG_SET_ORDER
+    );
+
+    foreach ($matches as $match) {
+        $value = (float) ($match[1] . (isset($match[2]) ? '.' . $match[2] : ''));
+
+        // Nilai rapor yang kita cari
+        if ($value >= 60 && $value <= 100) {
+            return $value;
+        }
+    }
+
+    return null;
+} 
+
+private function containsAnotherSubject(
+    string $line,
+    array $subjects,
+    string $currentSubject
+): bool {
+    $line = strtolower($line);
+
+    foreach ($subjects as $subject) {
+        if ($subject === $currentSubject) {
+            continue;
+        }
+
+        if (str_contains($line, strtolower($subject))) {
+            return true;
+        }
+    }
+
+    return false;
 }
