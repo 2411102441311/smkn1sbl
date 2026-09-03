@@ -179,6 +179,8 @@ class PpdbWizardController extends Controller
                 // siswa bisa isi manual di langkah konfirmasi.
             }
 
+            dd($ocrData['raw_text']);
+
             $reportCards[] = [
                 'path' => $path,
                 'name' => $file->getClientOriginalName(),

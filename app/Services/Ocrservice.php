@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\PPDB\OcrResult;
 use App\Models\PPDB\ReportCard;
+use Illuminate\Support\Facades\Log;
 use thiagoalessio\TesseractOCR\TesseractOCR;
 
 /**
@@ -107,7 +108,7 @@ class OcrService
 
             $result = $tesseract->run();
 
-            \Log::info('OCR berhasil dijalankan', [
+            Log::info('OCR berhasil dijalankan', [
                 'image' => $imagePath,
                 'text_length' => strlen($result),
             ]);
@@ -116,7 +117,7 @@ class OcrService
 
         } catch (\Throwable $e) {
 
-            \Log::error('OCR gagal dijalankan', [
+            Log::error('OCR gagal dijalankan', [
                 'image' => $imagePath,
                 'error' => $e->getMessage(),
             ]);

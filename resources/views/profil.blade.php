@@ -102,19 +102,46 @@
         </div>
     </section>
 
-    {{-- ============ STRUKTUR ORGANISASI ============ --}}
+    {{-- ============ STRUKTUR ORGANISASI (versi bagan, garis penghubung antar level) ============ --}}
+    @php
+        $orgByLevel = collect($orgStructure)
+            ->where('level', '<=', 3) // level 4 "Guru & Tenaga Kependidikan" sengaja gak ditampilin di bagan,
+            // karena udah lengkap dijabarin sendiri di section "Daftar Guru" tepat setelah ini
+            ->groupBy('level');
+    @endphp
     <section id="struktur" class="max-w-5xl mx-auto px-6 py-20 scroll-mt-24">
         <p class="text-skblue-600 text-xs font-bold uppercase tracking-widest mb-2 reveal">Struktur</p>
         <h2 class="font-display font-extrabold text-3xl text-slate-800 mb-10 reveal">Struktur Organisasi</h2>
 
-        <div class="space-y-3">
-            @foreach($orgStructure as $item)
-                <div class="reveal flex items-center gap-4" style="margin-left: {{ ($item['level'] - 1) * 32 }}px">
-                    <span class="shrink-0 w-2 h-2 rounded-full bg-skblue-500"></span>
-                    <div class="flex-1 bg-white border border-skblue-100 rounded-xl px-5 py-3 font-medium text-slate-700 hover:border-skblue-300 hover:shadow-soft transition-all duration-200">
-                        {{ $item['role'] }}
+        <div class="flex flex-col items-center reveal overflow-x-auto">
+            @foreach($orgByLevel as $level => $roles)
+                @if($level == 1)
+                    {{-- Node paling atas: Kepala Sekolah. Bio & fotonya sendiri sudah dijelaskan
+                         di bagian lain halaman, jadi di bagan cukup jadi titik puncak saja --}}
+                    <div class="rounded-xl bg-skblue-900 text-white font-display font-bold text-sm md:text-base px-7 py-3.5 text-center shadow-md">
+                        {{ $roles->first()['role'] }}
                     </div>
-                </div>
+                    <div class="w-px h-8 bg-skblue-200"></div>
+                @else
+                    <div class="relative w-full flex justify-center">
+                        @if($roles->count() > 1)
+                            <div class="absolute top-0 h-px bg-skblue-200" style="left:12.5%;right:12.5%;"></div>
+                        @endif
+                        <div class="flex flex-wrap justify-center gap-x-8 gap-y-4 pt-6">
+                            @foreach($roles as $r)
+                                <div class="relative flex flex-col items-center">
+                                    <div class="absolute -top-6 w-px h-6 bg-skblue-200"></div>
+                                    <div class="rounded-xl {{ $level == 2 ? 'bg-skblue-50 border border-skblue-200 text-skblue-900' : 'bg-white border border-skblue-100 text-slate-600' }} font-semibold text-xs md:text-sm px-5 py-3 text-center whitespace-nowrap">
+                                        {{ $r['role'] }}
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                    @if(!$loop->last)
+                        <div class="w-px h-8 bg-skblue-200"></div>
+                    @endif
+                @endif
             @endforeach
         </div>
     </section>
@@ -128,7 +155,10 @@
             <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
                 @foreach($teachers as $teacher)
                     @php
-                        $teacherPhoto = !empty($teacher['foto']) ? asset('images/guru/' . $teacher['foto']) : null;
+                        $teacherPhotoPath = $teacher['foto'] ?? null;
+                        $teacherPhoto = $teacherPhotoPath && file_exists(public_path('images/' . $teacherPhotoPath))
+                            ? asset('images/' . $teacherPhotoPath)
+                            : null;
                     @endphp
                     <div class="bg-white rounded-2xl border border-skblue-100 p-5 text-center hover:shadow-soft hover:-translate-y-1 transition-all duration-200 reveal reveal-delay-{{ $loop->iteration % 4 }}">
                         @if($teacherPhoto)
