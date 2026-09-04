@@ -14,9 +14,9 @@ class SchoolProfileController extends Controller
         // Data di bawah ini sementara statis — nanti bisa dipindah ke tabel/Settings tersendiri
         // kalau kakak mau bisa diedit lewat halaman admin.
         $history = [
-            'founded_year' => '1999',
-            'sk_number' => 'SK Pendirian Nomor 421.5/123/DISDIK/1999',
-            'text' => "Didirikan pada tahun 1999, sekolah ini bermula dari kebutuhan masyarakat Sebulu akan pendidikan kejuruan yang berkualitas. Sejak awal berdirinya, sekolah berkomitmen menyelenggarakan pendidikan yang memadukan penguasaan ilmu pengetahuan, keterampilan teknis, dan pembentukan karakter bagi peserta didik.\n\nSeiring berjalannya waktu, sekolah terus berkembang — baik dari sisi jumlah program keahlian, fasilitas praktik, maupun kerja sama dengan dunia usaha dan industri (DUDI) — hingga menjadi salah satu sekolah menengah kejuruan rujukan di Kutai Kartanegara.",
+            'founded_year' => '2011',
+            'sk_number' => 'SK Pendirian Nomor 421.5/7783/Disdikbud.IV/2018',
+            'text' => "Didirikan pada tahun 2011, sekolah ini bermula dari kebutuhan masyarakat Sebulu akan pendidikan kejuruan yang berkualitas. Sejak awal berdirinya, sekolah berkomitmen menyelenggarakan pendidikan yang memadukan penguasaan ilmu pengetahuan, keterampilan teknis, dan pembentukan karakter bagi peserta didik.\n\nSeiring berjalannya waktu, sekolah terus berkembang — baik dari sisi jumlah program keahlian, fasilitas praktik, maupun kerja sama dengan dunia usaha dan industri (DUDI) — hingga menjadi salah satu sekolah menengah kejuruan rujukan di Kutai Kartanegara.",
         ];
 
         $vision = 'Menjadi lembaga pendidikan kejuruan unggul yang menghasilkan lulusan kompeten, berkarakter, dan siap bersaing di dunia kerja maupun industri.';
@@ -39,6 +39,16 @@ class SchoolProfileController extends Controller
             ['role' => 'Guru & Tenaga Kependidikan', 'level' => 4],
         ];
 
+        // Kepala Sekolah — sengaja dipisah dari $teachers karena ditampilkan sebagai kartu
+        // yang lebih menonjol/besar di atas grid guru (lihat resources/views/profil.blade.php).
+        // TODO: ganti nama & nama file foto sesuai Kepala Sekolah yang sebenarnya.
+        $principal = [
+            'name' => 'Herjan, S.Pd.',
+            'subject' => 'Kepala Sekolah',
+            'nip' => '',
+            'foto' => 'guru/kepsek.jpeg',
+        ];
+
         // Catatan privasi: field 'nip' sengaja DISIMPAN di data ini untuk keperluan arsip/administrasi
         // internal, tapi TIDAK ditampilkan di halaman publik (lihat resources/views/profil.blade.php).
         // Field 'foto' berisi path relatif dari public/images/.
@@ -49,13 +59,11 @@ class SchoolProfileController extends Controller
             ['name' => 'Harpani, S.Sos.', 'subject' => 'Guru PPKN, Wakil Kepala Sekolah Bidang HUMAS, dan Ketua BKK', 'nip' => '', 'foto' => 'guru/harpani.jpeg'],
             ['name' => 'Yazid Bustani, S.P.', 'subject' => 'Guru Produktif Perkebunan dan Wakil Kepala Sekolah Bidang Sarana Prasarana', 'nip' => '', 'foto' => 'guru/yazid.jpeg'],
             ['name' => 'Hartini, S.Pi.', 'subject' => 'Wakil Kepala Sekolah Bidang Kurikulum Koordinator PJBL', 'nip' => '', 'foto' => 'guru/hartini.jpeg'],
-          
+
             ['name' => 'Sholehatusyadiah, S.Sos.', 'subject' => 'Kepala Program Keahlian Manajemen Perkantoran (MP)', 'nip' => '', 'foto' => 'guru/diah.jpeg'],
             ['name' => 'Ainun, S.Pd', 'subject' => 'Guru Keahlian Manajemen Perkantoran (MP) dan Pembina Pramuka Putri', 'nip' => '', 'foto' => 'guru/ainun.jpeg'],
 
-            
             ['name' => 'Bahrul Ilmy, S.Kom.', 'subject' => 'Kepala Program Keahlian Teknik Komputer dan Jaringan (TKJ)', 'nip' => '', 'foto' => 'guru/bahrul.jpeg'],
-           
 
             ['name' => 'Deny Irawan, S.P.', 'subject' => 'Guru Keahlian Agribisnis Tanaman Perkebunan', 'nip' => '', 'foto' => 'guru/deny.jpeg'],
             ['name' => 'Nugra Hartono, S.P.', 'subject' => 'Kepala Program Keahlian Agribisnis Tanaman Perkebunan', 'nip' => '', 'foto' => 'guru/nugra.jpeg'],
@@ -74,6 +82,7 @@ class SchoolProfileController extends Controller
             ['name' => 'Sri Rezeki, S.Pd.', 'subject' => 'Guru Bahasa Inggris', 'nip' => '', 'foto' => 'guru/sri.jpeg'],
             ['name' => 'Karyono, S.Pd.', 'subject' => 'Guru PJOK', 'nip'=> '', 'foto' => 'guru/karyono.jpeg'],
             ['name' => 'Ikhwanul Ikhsan Fauzi, S.Pi', 'subject' => 'Guru Kreatif dan Kewirausahaan', 'nip' => '', 'foto' => 'guru/fauzi.jpeg'],
+            ['name' => 'Titik Yulianto Hadi, S.Sos., S.Pd.', 'subject' => 'Kepala Laboratorium dan Bendahara', 'nip' => '', 'foto' => 'guru/titik.jpeg'],
 
             //* Tenaga Kependidikan
             ['name' => 'Ika Dyah Wulandari, S.M.', 'subject' => 'Staff Pelaksana Bidang Kepegawaian, Arsip, dan Surat', 'nip' => '', 'foto' => 'staff/ika.jpeg'],
@@ -81,7 +90,6 @@ class SchoolProfileController extends Controller
             ['name' => 'Muhammad Al-Rasid, S.Pd.', 'subject' => 'Staff Pelaksana Bidang Bendahara Sekolah', 'nip' => '', 'foto' => 'staff/rasid.jpeg'],
             ['name' => 'Aidul Ismail', 'subject' => 'Staff Pelaksana Bidang Sarana Prasarana dan Pembina Pramuka Putra', 'nip' => '', 'foto' => 'staff/aidul.jpeg'],
             ['name' => 'Maulidati', 'subject' => 'Staff Pelaksana Bidang Kesiswaan dan Perpustakaan', 'nip' => '', 'foto' => 'staff/maulidati.jpeg'],
-
         ];
 
         $achievements = [
@@ -104,7 +112,7 @@ class SchoolProfileController extends Controller
 
         return view('profil', compact(
             'schoolName', 'history', 'vision', 'missions',
-            'orgStructure', 'teachers', 'achievements', 'extracurriculars'
+            'orgStructure', 'principal', 'teachers', 'achievements', 'extracurriculars'
         ));
     }
 }

@@ -152,6 +152,30 @@
             <p class="text-skblue-600 text-xs font-bold uppercase tracking-widest mb-2 reveal">Tenaga Pendidik</p>
             <h2 class="font-display font-extrabold text-3xl text-slate-800 mb-10 reveal">Daftar Guru &amp; Tenaga Kependidikan</h2>
 
+            {{-- Kartu Kepala Sekolah — sengaja dibuat lebih besar & menonjol dibanding kartu guru biasa --}}
+            @php
+                $principalPhotoPath = $principal['foto'] ?? null;
+                $principalPhoto = $principalPhotoPath && file_exists(public_path('images/' . $principalPhotoPath))
+                    ? asset('images/' . $principalPhotoPath)
+                    : null;
+            @endphp
+            <div class="bg-white rounded-2xl border-2 border-skblue-200 shadow-soft p-6 md:p-8 mb-8 flex flex-col sm:flex-row items-center gap-6 reveal">
+                @if($principalPhoto)
+                    <img src="{{ $principalPhoto }}" alt="{{ $principal['name'] }}" class="w-28 h-28 md:w-32 md:h-32 rounded-full object-cover border-4 border-skblue-100 shadow-sm shrink-0">
+                @else
+                    <div class="w-28 h-28 md:w-32 md:h-32 rounded-full bg-skblue-100 flex items-center justify-center shrink-0">
+                        <svg class="w-14 h-14 text-skblue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                        </svg>
+                    </div>
+                @endif
+                <div class="text-center sm:text-left">
+                    <span class="inline-block text-xs font-bold uppercase tracking-widest text-skgold-600 bg-skgold-50 rounded-full px-3 py-1 mb-2">Kepala Sekolah</span>
+                    <p class="font-display font-extrabold text-xl md:text-2xl text-slate-800">{{ $principal['name'] }}</p>
+                    <p class="text-sm text-slate-500 mt-1">Memimpin {{ $schoolName ?? 'SMK Negeri 1 Sebulu' }}</p>
+                </div>
+            </div>
+
             <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
                 @foreach($teachers as $teacher)
                     @php

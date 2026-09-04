@@ -54,8 +54,8 @@
             {{-- Kartu statistik ringkas --}}
             <div class="lg:col-span-2 grid grid-cols-2 gap-4 reveal-right">
                 @foreach([
-                    ['label' => 'Siswa Aktif', 'value' => '1.200+'],
-                    ['label' => 'Tenaga Pengajar', 'value' => '85+'],
+                    ['label' => 'Siswa Aktif', 'value' => '278+'],
+                    ['label' => 'Tenaga Pengajar', 'value' => '28'],
                     ['label' => 'Program Jurusan', 'value' => '3'],
                     ['label' => 'Tingkat Kelulusan', 'value' => '98%'],
                 ] as $stat)
@@ -172,7 +172,7 @@
                 </div>
 
                 <div class="mt-8">
-                    <p class="font-display font-bold text-slate-800 text-lg">{{ $principal['name'] ?? 'Nama Kepala Sekolah, S.Pd., M.Pd.' }}</p>
+                    <p class="font-display font-bold text-slate-800 text-lg">{{ $principal['name'] ?? 'Herjan, S.Pd.' }}</p>
                     <p class="text-skblue-600 text-sm font-medium flex items-center gap-2 mt-1">
                         <span class="w-6 h-px bg-skblue-400"></span>
                         Kepala {{ $schoolName ?? 'SMK Negeri 1 Sebulu' }}

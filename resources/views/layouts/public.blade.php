@@ -102,7 +102,7 @@
             <div class="flex items-center gap-3 md:gap-6 flex-wrap justify-center">
                 <span class="flex items-center gap-1.5">
                     <svg class="w-3 h-3 md:w-3.5 md:h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-                    {{ \App\Models\CMS\Setting::get('school_email', 'info@smkn1sebulu.sch.id') }}
+                    {{ \App\Models\CMS\Setting::get('school_email', 'smkn1sbl@gmail.com') }}
                 </span>
                 <span class="flex items-center gap-1.5">
                     <svg class="w-3 h-3 md:w-3.5 md:h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
@@ -147,7 +147,7 @@
                 </div>
                 <div class="leading-tight">
                     <p class="font-display font-extrabold text-skblue-900 text-sm md:text-base tracking-tight">{{ $schoolName ?? 'SMK Negeri 1 Sebulu' }}</p>
-                    <p class="text-[10px] md:text-[11px] text-skblue-500 font-medium tracking-wide uppercase">Unggul &middot; Kompeten &middot; Berkarakter</p>
+                    <p class="text-[10px] md:text-[11px] text-skblue-500 font-medium tracking-wide uppercase">SMK Hebat &middot; SMK Bisa &middot; SMK Maju</p>
                 </div>
             </a>
 
@@ -189,11 +189,20 @@
                     <div class="absolute left-0 top-full pt-2 w-64 opacity-0 invisible translate-y-1 group-hover/jurusan:opacity-100 group-hover/jurusan:visible group-hover/jurusan:translate-y-0 transition-all duration-200 z-50">
                         <div class="bg-white rounded-2xl border border-skblue-100 shadow-soft py-2 overflow-hidden">
                             @foreach(\App\Http\Controllers\MajorController::data() as $navMajor)
+                                @php
+                                    $navLogoAda = !empty($navMajor['logo']) && file_exists(public_path($navMajor['logo']));
+                                @endphp
                                 <a href="{{ route('jurusan.show', $navMajor['slug']) }}"
                                    class="flex items-center gap-3 px-4 py-2.5 hover:bg-skblue-50 transition-all duration-200 group/item">
-                                    <span class="w-8 h-8 rounded-lg bg-gradient-to-br {{ $navMajor['color_from'] }} {{ $navMajor['color_to'] }} flex items-center justify-center shrink-0">
-                                        @include('partials.major-icon', ['icon' => $navMajor['icon'], 'class' => 'w-4 h-4 text-white'])
-                                    </span>
+                                    @if($navLogoAda)
+                                        <span class="w-8 h-8 rounded-lg bg-white border border-skblue-100 flex items-center justify-center shrink-0 overflow-hidden p-1">
+                                            <img src="{{ asset($navMajor['logo']) }}" alt="Logo {{ $navMajor['name'] }}" class="w-full h-full object-contain">
+                                        </span>
+                                    @else
+                                        <span class="w-8 h-8 rounded-lg bg-gradient-to-br {{ $navMajor['color_from'] }} {{ $navMajor['color_to'] }} flex items-center justify-center shrink-0">
+                                            @include('partials.major-icon', ['icon' => $navMajor['icon'], 'class' => 'w-4 h-4 text-white'])
+                                        </span>
+                                    @endif
                                     <span class="text-sm font-medium text-slate-600 group-hover/item:text-skblue-700 group-hover/item:translate-x-0.5 transition-all duration-200">
                                         {{ $navMajor['name'] }}
                                     </span>
