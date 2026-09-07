@@ -21,7 +21,12 @@
         ========================== */
 
         .kop {
-   
+            width: 100%;
+            text-align: center;
+            margin-bottom: 18px;
+            padding-bottom: 10px;
+        }
+
         .kop img {
             width: 100%;
             height: auto;
@@ -177,17 +182,17 @@
 
 <body>
 
-   {{-- =========================
-     KOP SURAT
-        ========================== --}}
+    {{-- =========================
+         KOP SURAT
+    ========================== --}}
 
-    
     <div class="kop">
         <img
             src="{{ storage_path('app/public/ppdb/kop_surat.jpeg') }}"
             style="width: 100%; height: auto;"
         >
     </div>
+
 
     {{-- =========================
          JUDUL
@@ -306,9 +311,37 @@
         </tr>
 
         <tr>
+            <td class="label">NIK Ayah</td>
+            <td class="value">
+                {{ $registration->parentData->father_nik ?? '-' }}
+            </td>
+        </tr>
+
+        <tr>
+            <td class="label">No. HP Ayah</td>
+            <td class="value">
+                {{ $registration->parentData->father_phone ?? '-' }}
+            </td>
+        </tr>
+
+        <tr>
             <td class="label">Nama Ibu</td>
             <td class="value">
                 {{ $registration->parentData->mother_name ?? '-' }}
+            </td>
+        </tr>
+
+        <tr>
+            <td class="label">NIK Ibu</td>
+            <td class="value">
+                {{ $registration->parentData->mother_nik ?? '-' }}
+            </td>
+        </tr>
+
+        <tr>
+            <td class="label">No. HP Ibu</td>
+            <td class="value">
+                {{ $registration->parentData->mother_phone ?? '-' }}
             </td>
         </tr>
 
