@@ -33,7 +33,7 @@
                     Foto Rapor <span class="text-red-500">*</span>
                     <span class="font-normal text-slate-400">(boleh pilih lebih dari 1 foto sekaligus, misal per semester)</span>
                 </label>
-                <input type="file" name="report_cards[]" accept="image/*" multiple required
+                <input type="file" name="report_cards[]" accept="image/jpeg,image/png,image/webp" multiple required
                        class="w-full text-sm text-slate-600 file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:bg-skblue-600 file:text-white file:text-sm file:font-semibold hover:file:bg-skblue-700">
                 <p class="text-xs text-slate-400 mt-2">
                     Tekan <kbd class="bg-white border border-slate-200 rounded px-1.5 py-0.5 text-[10px]">Ctrl</kbd>

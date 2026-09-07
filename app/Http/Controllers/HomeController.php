@@ -18,7 +18,13 @@ class HomeController extends Controller
         $banners = Banner::active()->get();
         $latestNews = News::published()->take(3)->get();
         $announcements = Announcement::active()->take(5)->get();
-        $galleries = Gallery::latest()->take(8)->get();
+        $galleries = Gallery::whereNull('major_slug')
+            ->whereDoesntHave('category', function ($query) {
+                $query->where('name', 'Fasilitas');
+            })
+            ->latest()
+            ->take(8)
+            ->get();
         $schoolName = Setting::get('school_name', 'SMK Negeri 1 Sebulu');
 
         // Data jurusan diambil dari MajorController::data() — SUMBER TUNGGAL,

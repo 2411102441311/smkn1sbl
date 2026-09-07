@@ -58,7 +58,7 @@ class PpdbWizardController extends Controller
     {
         $data = $request->validate([
             'nik' => 'nullable|string|max:20',
-            'family_card_number' => 'nullable|digits:20',
+            'family_card_number' => 'nullable|string|max:20',
             'name' => 'required|string|max:255',
             'place_of_birth' => 'nullable|string|max:100',
             'date_of_birth' => 'nullable|date',
@@ -255,15 +255,12 @@ class PpdbWizardController extends Controller
         Request $request,
         OcrService $ocrService
     ) {
-        /*
-         * OCR hanya menerima JPG/JPEG.
-         */
         $request->validate([
             'report_cards' =>
                 'required|array|min:1',
 
             'report_cards.*' =>
-                'required|image|mimes:jpg,jpeg|max:4096',
+                'required|image|mimes:jpg,jpeg,png,webp|max:8192',
         ]);
 
         /*

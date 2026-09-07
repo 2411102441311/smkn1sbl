@@ -40,6 +40,8 @@ class OcrService
             ];
         }
 
+        $ocrImagePath = $this->prepareImageForOcr($absoluteImagePath);
+
         /*
          * PSM 4:
          * Cocok untuk tabel rapor.
@@ -48,14 +50,18 @@ class OcrService
          * Cocok untuk SKL/dokumen yang teksnya tersebar.
          */
         $textPsm4 = $this->extractText(
-            $absoluteImagePath,
+            $ocrImagePath,
             4
         );
 
         $textPsm11 = $this->extractText(
-            $absoluteImagePath,
+            $ocrImagePath,
             11
         );
+
+        if ($ocrImagePath !== $absoluteImagePath && is_file($ocrImagePath)) {
+            @unlink($ocrImagePath);
+        }
 
         /*
          * Parse PSM 4 terlebih dahulu.
@@ -106,6 +112,64 @@ class OcrService
             'grades' => $grades,
             'confidence' => $confidence,
         ];
+    }
+
+    /**
+     * Menyamakan orientasi dan ukuran foto kamera HP sebelum OCR.
+     */
+    protected function prepareImageForOcr(string $imagePath): string
+    {
+        if (!function_exists('imagecreatefromjpeg')) {
+            return $imagePath;
+        }
+
+        $imageInfo = @getimagesize($imagePath);
+        if (!$imageInfo) {
+            return $imagePath;
+        }
+
+        $source = match ($imageInfo['mime'] ?? '') {
+            'image/jpeg' => @imagecreatefromjpeg($imagePath),
+            'image/png' => function_exists('imagecreatefrompng') ? @imagecreatefrompng($imagePath) : false,
+            'image/webp' => function_exists('imagecreatefromwebp') ? @imagecreatefromwebp($imagePath) : false,
+            default => false,
+        };
+
+        if (!$source) {
+            return $imagePath;
+        }
+
+        $width = imagesx($source);
+        $height = imagesy($source);
+
+        if ($imageInfo['mime'] === 'image/jpeg' && function_exists('exif_read_data')) {
+            $exif = @exif_read_data($imagePath);
+            $orientation = (int) ($exif['Orientation'] ?? 1);
+
+            $source = match ($orientation) {
+                3 => imagerotate($source, 180, 0),
+                6 => imagerotate($source, -90, 0),
+                8 => imagerotate($source, 90, 0),
+                default => $source,
+            } ?: $source;
+
+            $width = imagesx($source);
+            $height = imagesy($source);
+        }
+
+        $maxDimension = 2200;
+        $scale = min(1, $maxDimension / max($width, $height));
+        $targetWidth = max(1, (int) round($width * $scale));
+        $targetHeight = max(1, (int) round($height * $scale));
+        $target = imagecreatetruecolor($targetWidth, $targetHeight);
+        imagecopyresampled($target, $source, 0, 0, 0, 0, $targetWidth, $targetHeight, $width, $height);
+
+        $normalizedPath = storage_path('app/ocr-' . uniqid('', true) . '.jpg');
+        imagejpeg($target, $normalizedPath, 88);
+        imagedestroy($target);
+        imagedestroy($source);
+
+        return is_file($normalizedPath) ? $normalizedPath : $imagePath;
     }
 
     /**
@@ -206,12 +270,12 @@ class OcrService
 
             $tesseractPath = env(
                 'TESSERACT_PATH',
-                'D:\\Program Files\\Tesseract-OCR\\tesseract.exe'
+                'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
             );
 
             $tessdataPath = env(
                 'TESSDATA_PATH',
-                'D:\\Program Files\\Tesseract-OCR\\tessdata'
+                'C:\\Program Files\\Tesseract-OCR\\tessdata'
             );
 
             $tesseract = new TesseractOCR(
