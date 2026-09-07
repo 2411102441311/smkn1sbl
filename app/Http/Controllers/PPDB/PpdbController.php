@@ -25,6 +25,7 @@ class PpdbController extends Controller
         $data = $request->validate([
             // Biodata
             'nik' => 'nullable|string|max:20',
+            'family_card_number' => 'nullable|string|max:20',
             'name' => 'required|string|max:255',
             'place_of_birth' => 'nullable|string|max:100',
             'date_of_birth' => 'nullable|date',

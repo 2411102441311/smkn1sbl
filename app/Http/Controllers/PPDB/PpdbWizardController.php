@@ -5,378 +5,1085 @@ namespace App\Http\Controllers\PPDB;
 use App\Http\Controllers\Controller;
 use App\Models\Major;
 use App\Models\PPDB\Registration;
+use App\Models\PPDB\MajorChoice;
 use App\Services\OcrService;
 use App\Services\SawService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
-/**
- * Wizard pendaftaran PPDB, 7 langkah sesuai alur:
- * 1. Biodata -> 2. Data Ortu -> 3. Dokumen -> 4. Foto Rapor -> (OCR otomatis)
- * -> 5. Konfirmasi Nilai -> (SAW otomatis) -> 6. Rekomendasi -> 7. Pilih Jurusan -> Submit Final
- *
- * Semua data disimpan sementara di SESSION selama proses wizard berlangsung.
- * Baru benar-benar disimpan ke database (dan nomor pendaftaran digenerate)
- * di langkah paling akhir (submitFinal).
- */
 class PpdbWizardController extends Controller
 {
+    /**
+     * Session key untuk seluruh proses wizard PPDB.
+     */
     protected string $sessionKey = 'ppdb_wizard';
 
+    /**
+     * Ambil seluruh data wizard dari session.
+     */
     protected function wizardData(): array
     {
         return session($this->sessionKey, []);
     }
 
+    /**
+     * Simpan/update data wizard ke session.
+     */
     protected function putWizardData(array $data): void
     {
-        session([$this->sessionKey => array_merge($this->wizardData(), $data)]);
+        session([
+            $this->sessionKey => array_merge(
+                $this->wizardData(),
+                $data
+            ),
+        ]);
     }
 
-    // ============ LANGKAH 1: BIODATA ============
+    // =========================================================
+    // LANGKAH 1: BIODATA
+    // =========================================================
+
     public function biodataForm()
     {
-        return view('ppdb.wizard.step1-biodata', ['old' => $this->wizardData()['biodata'] ?? []]);
+        return view(
+            'ppdb.wizard.step1-biodata',
+            [
+                'old' => $this->wizardData()['biodata'] ?? [],
+            ]
+        );
     }
 
     public function biodataStore(Request $request)
     {
         $data = $request->validate([
             'nik' => 'nullable|string|max:20',
-            'family_card_number' => 'nullable|string|max:20',
+            'family_card_number' => 'nullable|digits:20',
             'name' => 'required|string|max:255',
             'place_of_birth' => 'nullable|string|max:100',
             'date_of_birth' => 'nullable|date',
             'gender' => 'nullable|in:L,P',
-            'height_cm' => 'nullable|numeric|min:0|max:250',
-            'weight_kg' => 'nullable|numeric|min:0|max:300',
             'religion' => 'nullable|string|max:50',
             'address' => 'nullable|string',
             'school_origin' => 'nullable|string|max:255',
-            'has_kip' => 'nullable|boolean',
-            'kip_number' => 'nullable|required_if:has_kip,1|string|max:30',
         ]);
- 
-        $data['has_kip'] = $request->boolean('has_kip');
- 
-        $this->putWizardData(['biodata' => $data]);
- 
-        return redirect()->route('ppdb.wizard.parents');
+
+        $this->putWizardData([
+            'biodata' => $data,
+        ]);
+
+        return redirect()->route(
+            'ppdb.wizard.parents'
+        );
     }
 
-    // ============ LANGKAH 2: DATA ORANG TUA ============
+    // =========================================================
+    // LANGKAH 2: DATA ORANG TUA
+    // =========================================================
+
     public function parentsForm()
     {
-        if (empty($this->wizardData()['biodata'])) {
-            return redirect()->route('ppdb.wizard.biodata')->with('error', 'Lengkapi biodata terlebih dahulu.');
+        if (
+            empty(
+                $this->wizardData()['biodata']
+                ?? []
+            )
+        ) {
+            return redirect()
+                ->route('ppdb.wizard.biodata')
+                ->with(
+                    'error',
+                    'Lengkapi biodata terlebih dahulu.'
+                );
         }
 
-        return view('ppdb.wizard.step2-parents', ['old' => $this->wizardData()['parents'] ?? []]);
+        return view(
+            'ppdb.wizard.step2-parents',
+            [
+                'old' =>
+                    $this->wizardData()['parents']
+                    ?? [],
+            ]
+        );
     }
 
     public function parentsStore(Request $request)
     {
         $data = $request->validate([
             'father_name' => 'nullable|string|max:255',
-            'father_nik' => 'nullable|string|max:20',
             'father_phone' => 'nullable|string|max:30',
             'father_occupation' => 'nullable|string|max:100',
             'mother_name' => 'nullable|string|max:255',
-            'mother_nik' => 'nullable|string|max:20',
             'mother_phone' => 'nullable|string|max:30',
             'mother_occupation' => 'nullable|string|max:100',
         ]);
- 
-        $this->putWizardData(['parents' => $data]);
- 
-        return redirect()->route('ppdb.wizard.documents');
+
+        $this->putWizardData([
+            'parents' => $data,
+        ]);
+
+        return redirect()->route(
+            'ppdb.wizard.documents'
+        );
     }
 
-    // ============ LANGKAH 3: UPLOAD DOKUMEN ============
+    // =========================================================
+    // LANGKAH 3: UPLOAD DOKUMEN
+    // =========================================================
+
     public function documentsForm()
     {
-        if (empty($this->wizardData()['parents'])) {
-            return redirect()->route('ppdb.wizard.parents')->with('error', 'Lengkapi data orang tua terlebih dahulu.');
+        if (
+            empty(
+                $this->wizardData()['parents']
+                ?? []
+            )
+        ) {
+            return redirect()
+                ->route('ppdb.wizard.parents')
+                ->with(
+                    'error',
+                    'Lengkapi data orang tua terlebih dahulu.'
+                );
         }
 
-        return view('ppdb.wizard.step3-documents', ['uploaded' => $this->wizardData()['documents'] ?? []]);
+        return view(
+            'ppdb.wizard.step3-documents',
+            [
+                'uploaded' =>
+                    $this->wizardData()['documents']
+                    ?? [],
+            ]
+        );
     }
 
     public function documentsStore(Request $request)
     {
         $request->validate([
-            'doc_kk' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:4096',
-            'doc_akte' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:4096',
-            'doc_ijazah' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:4096',
-            'doc_foto' => 'nullable|file|mimes:jpg,jpeg,png|max:2048',
+            'doc_kk' =>
+                'nullable|file|mimes:pdf,jpg,jpeg,png|max:4096',
+
+            'doc_akte' =>
+                'nullable|file|mimes:pdf,jpg,jpeg,png|max:4096',
+
+            'doc_ijazah' =>
+                'nullable|file|mimes:pdf,jpg,jpeg,png|max:4096',
+
+            'doc_foto' =>
+                'nullable|file|mimes:jpg,jpeg,png|max:2048',
         ]);
 
         $documentLabels = [
-            'doc_kk' => 'Kartu Keluarga',
+            'doc_kk' => 'kk',
             'doc_akte' => 'Akte Kelahiran',
-            'doc_ijazah' => 'Ijazah / Surat Keterangan Lulus',
+            'doc_ijazah' =>
+                'Ijazah / Surat Keterangan Lulus',
             'doc_foto' => 'Pas Foto',
         ];
 
-        $uploaded = $this->wizardData()['documents'] ?? [];
-        $wizardToken = $this->wizardData()['token'] ?? ($this->wizardData()['token'] = (string) Str::uuid());
+        $uploaded =
+            $this->wizardData()['documents']
+            ?? [];
 
-        foreach ($documentLabels as $field => $label) {
-            if ($request->hasFile($field)) {
-                $file = $request->file($field);
-                $path = $file->storeAs(
-                    "ppdb/temp/{$wizardToken}",
-                    $field . '_' . time() . '.' . $file->getClientOriginalExtension(),
-                    'public'
-                );
+        $wizardToken =
+            $this->wizardData()['token']
+            ?? (string) Str::uuid();
 
-                $uploaded[$field] = [
-                    'label' => $label,
-                    'path' => $path,
-                    'name' => $file->getClientOriginalName(),
-                ];
+        foreach (
+            $documentLabels
+            as $field => $label
+        ) {
+            if (
+                !$request->hasFile($field)
+            ) {
+                continue;
             }
-        }
 
-        $this->putWizardData(['documents' => $uploaded, 'token' => $wizardToken]);
+            $file =
+                $request->file($field);
 
-        return redirect()->route('ppdb.wizard.reportCard');
-    }
-
-    // ============ LANGKAH 4: UPLOAD FOTO RAPOR (lalu OCR otomatis) ============
-    public function reportCardForm()
-    {
-        return view('ppdb.wizard.step4-report-card');
-    }
-
-    public function reportCardStore(Request $request, OcrService $ocrService)
-    {
-        $request->validate([
-            'report_cards' => 'required|array|min:1',
-            'report_cards.*' => 'image|max:4096',
-        ]);
-
-        $wizardToken = $this->wizardData()['token'] ?? ($this->wizardData()['token'] = (string) Str::uuid());
-
-        $reportCards = [];       // detail per foto (buat disimpan semua ke database nanti)
-        $gradesPerSubject = [];  // kumpulan nilai per mapel dari SEMUA foto, buat dirata-ratakan
-
-        foreach ($request->file('report_cards') as $index => $file) {
             $path = $file->storeAs(
                 "ppdb/temp/{$wizardToken}",
-                'report_card_' . ($index + 1) . '_' . time() . '.' . $file->getClientOriginalExtension(),
+                $field .
+                    '_' .
+                    time() .
+                    '.' .
+                    $file->getClientOriginalExtension(),
                 'public'
             );
 
-            $ocrData = ['raw_text' => '', 'grades' => [], 'confidence' => 0];
+            $uploaded[$field] = [
+                'label' =>
+                    $label,
 
-            try {
-                $ocrData = $ocrService->extractFromPath(storage_path('app/public/' . $path));
-            } catch (\Throwable $e) {
-                report($e);
-                // OCR gagal untuk foto ini — tetap lanjut ke foto berikutnya,
-                // siswa bisa isi manual di langkah konfirmasi.
-            }
+                'path' =>
+                    $path,
 
-            dd($ocrData['raw_text']);
+                'name' =>
+                    $file->getClientOriginalName(),
 
-            $reportCards[] = [
-                'path' => $path,
-                'name' => $file->getClientOriginalName(),
-                'raw_text' => $ocrData['raw_text'],
-                'grades' => $ocrData['grades'],
-                'confidence' => $ocrData['confidence'],
+                'mime_type' =>
+                    $file->getMimeType(),
+
+                'file_size' =>
+                    $file->getSize(),
+            ];
+        }
+
+        $this->putWizardData([
+            'documents' => $uploaded,
+            'token' => $wizardToken,
+        ]);
+
+        return redirect()->route(
+            'ppdb.wizard.reportCard'
+        );
+    }
+
+    // =========================================================
+    // LANGKAH 4: UPLOAD FOTO RAPOR + OCR
+    // =========================================================
+
+    public function reportCardForm()
+    {
+        return view(
+            'ppdb.wizard.step4-report-card'
+        );
+    }
+
+    public function reportCardStore(
+        Request $request,
+        OcrService $ocrService
+    ) {
+        /*
+         * OCR hanya menerima JPG/JPEG.
+         */
+        $request->validate([
+            'report_cards' =>
+                'required|array|min:1',
+
+            'report_cards.*' =>
+                'required|image|mimes:jpg,jpeg|max:4096',
+        ]);
+
+        /*
+         * Token wizard.
+         */
+        $wizardToken =
+            $this->wizardData()['token']
+            ?? (string) Str::uuid();
+
+        /*
+         * Detail setiap foto.
+         */
+        $reportCards = [];
+
+        /*
+         * Nilai yang ditemukan dari semua foto.
+         *
+         * Contoh:
+         *
+         * Foto 1:
+         * Matematika = 89
+         *
+         * Foto 2:
+         * Bahasa Indonesia = 77
+         *
+         * Foto 3:
+         * Bahasa Inggris = 81
+         *
+         * Semua akan digabung.
+         */
+        $gradesPerSubject = [];
+
+        /*
+         * =========================================================
+         * PROSES SETIAP FOTO
+         * =========================================================
+         */
+        foreach (
+            $request->file('report_cards')
+            as $index => $file
+        ) {
+            /*
+             * Simpan foto sementara.
+             */
+            $path = $file->storeAs(
+                "ppdb/temp/{$wizardToken}",
+                'report_card_' .
+                    ($index + 1) .
+                    '_' .
+                    time() .
+                    '.' .
+                    $file->getClientOriginalExtension(),
+                'public'
+            );
+
+            /*
+             * Default jika OCR gagal.
+             */
+            $ocrData = [
+                'raw_text' => '',
+                'grades' => [],
+                'confidence' => 0,
             ];
 
-            // Kumpulkan tiap nilai yang ketemu per mapel (dari semester manapun)
-            foreach ($ocrData['grades'] as $subject => $value) {
-                $gradesPerSubject[$subject][] = $value;
+            /*
+             * Jalankan OCR.
+             */
+            try {
+                $ocrData =
+                    $ocrService->extractFromPath(
+                        storage_path(
+                            'app/public/' . $path
+                        )
+                    );
+                    
+            } catch (\Throwable $e) {
+
+                report($e);
+
+                \Log::error(
+                    'OCR report card gagal.',
+                    [
+                        'path' => $path,
+                        'error' =>
+                            $e->getMessage(),
+                    ]
+                );
+            }
+
+            /*
+             * Simpan detail hasil OCR
+             * untuk foto ini.
+             */
+            $reportCards[] = [
+                'path' => $path,
+
+                'name' =>
+                    $file->getClientOriginalName(),
+
+                'mime_type' =>
+                    $file->getMimeType(),
+
+                'file_size' =>
+                    $file->getSize(),
+
+                'raw_text' =>
+                    $ocrData['raw_text']
+                    ?? '',
+
+                'grades' =>
+                    $ocrData['grades']
+                    ?? [],
+
+                'confidence' =>
+                    $ocrData['confidence']
+                    ?? 0,
+            ];
+
+            /*
+             * =====================================================
+             * GABUNGKAN NILAI BERDASARKAN MAPEL
+             * =====================================================
+             */
+            foreach (
+                ($ocrData['grades'] ?? [])
+                as $subject => $value
+            ) {
+                /*
+                 * Abaikan nilai kosong.
+                 */
+                if (
+                    $value === null ||
+                    $value === ''
+                ) {
+                    continue;
+                }
+
+                /*
+                 * Pastikan nilai berupa angka.
+                 */
+                if (!is_numeric($value)) {
+                    continue;
+                }
+
+                $gradesPerSubject[
+                    $subject
+                ][] = (float) $value;
             }
         }
 
-        // Rata-ratakan nilai tiap mapel dari semua semester yang berhasil terbaca
+        /*
+         * =========================================================
+         * RATA-RATA NILAI DARI SEMUA FOTO
+         * =========================================================
+         *
+         * Kalau satu mapel muncul di beberapa rapor,
+         * nilainya dirata-ratakan.
+         */
         $averagedGrades = [];
-        foreach ($gradesPerSubject as $subject => $values) {
-            $averagedGrades[$subject] = round(array_sum($values) / count($values), 2);
+
+        foreach (
+            $gradesPerSubject
+            as $subject => $values
+        ) {
+            if (empty($values)) {
+                continue;
+            }
+
+            $averagedGrades[
+                $subject
+            ] = round(
+                array_sum($values) /
+                    count($values),
+                2
+            );
         }
 
-        // Confidence keseluruhan = rata-rata confidence semua foto
-        $overallConfidence = count($reportCards) > 0
-            ? round(array_sum(array_column($reportCards, 'confidence')) / count($reportCards), 2)
-            : 0;
+        /*
+         * =========================================================
+         * CONFIDENCE HASIL GABUNGAN
+         * =========================================================
+         *
+         * Yang dihitung adalah 5 nilai inti:
+         *
+         * 1. Matematika
+         * 2. Bahasa Indonesia
+         * 3. Bahasa Inggris
+         * 4. IPA
+         * 5. IPS
+         *
+         * Jadi bukan confidence setiap foto.
+         *
+         * Misalnya:
+         *
+         * Foto 1 = Matematika
+         * Foto 2 = Bahasa Indonesia
+         * Foto 3 = Bahasa Inggris
+         * Foto 4 = IPA
+         * Foto 5 = IPS
+         *
+         * Hasil akhir = 100%.
+         */
+        $coreSubjects = [
+            'Matematika',
+            'Bahasa Indonesia',
+            'Bahasa Inggris',
+            'IPA',
+            'IPS',
+        ];
 
-        $this->putWizardData([
-            'token' => $wizardToken,
-            'report_cards' => $reportCards,   // detail lengkap tiap foto, dipakai saat submit final
-            'ocr_confidence' => $overallConfidence,
-            'grades' => $averagedGrades,       // nilai gabungan (rata-rata), akan dikonfirmasi di langkah berikut
-        ]);
+        $foundCore = 0;
 
-        return redirect()->route('ppdb.wizard.ocrReview');
-    }
-
-    // ============ LANGKAH 5: SISWA MENGECEK & KONFIRMASI HASIL OCR ============
-    public function ocrReviewForm(OcrService $ocrService)
-    {
-        if (empty($this->wizardData()['report_cards'])) {
-            return redirect()->route('ppdb.wizard.reportCard')->with('error', 'Upload foto rapor terlebih dahulu.');
+        foreach (
+            $coreSubjects
+            as $subject
+        ) {
+            if (
+                isset(
+                    $averagedGrades[$subject]
+                ) &&
+                $averagedGrades[$subject] !== null
+            ) {
+                $foundCore++;
+            }
         }
 
-        return view('ppdb.wizard.step5-ocr-review', [
-            'subjects' => $ocrService->getSubjects(),
-            'grades' => $this->wizardData()['grades'] ?? [],
-            'confidence' => $this->wizardData()['ocr_confidence'] ?? 0,
-        ]);
-    }
+        $overallConfidence =
+            round(
+                (
+                    $foundCore /
+                    count($coreSubjects)
+                ) * 100,
+                2
+            );
 
-    public function ocrReviewStore(Request $request, SawService $sawService)
-    {
-        $validated = $request->validate([
-            'grades' => 'required|array',
-            'grades.*' => 'nullable|numeric|min:0|max:100',
-        ]);
-
-        // Nilai final versi siswa (sudah dikoreksi kalau ada yang salah baca)
-        $confirmedGrades = array_filter($validated['grades'], fn ($v) => $v !== null && $v !== '');
-
-        // Langsung hitung SAW dari nilai yang sudah dikonfirmasi ini
-        $sawCalculation = $sawService->calculateFromGrades($confirmedGrades);
-
+        /*
+         * =========================================================
+         * SIMPAN HASIL KE SESSION
+         * =========================================================
+         */
         $this->putWizardData([
-            'grades' => $confirmedGrades,
-            'grades_confirmed' => true,
-            'saw_scores' => $sawCalculation['scores'],
-            'recommended_slug' => $sawCalculation['recommended_slug'],
+            'token' =>
+                $wizardToken,
+
+            /*
+             * Detail semua foto.
+             */
+            'report_cards' =>
+                $reportCards,
+
+            /*
+             * Confidence berdasarkan
+             * hasil semua foto.
+             */
+            'ocr_confidence' =>
+                $overallConfidence,
+
+            /*
+             * Nilai gabungan yang akan
+             * ditampilkan di konfirmasi.
+             */
+            'grades' =>
+                $averagedGrades,
+
+            /*
+             * Belum dikonfirmasi siswa.
+             */
+            'grades_confirmed' =>
+                false,
         ]);
 
-        return redirect()->route('ppdb.wizard.recommendation');
+        return redirect()->route(
+            'ppdb.wizard.ocrReview'
+        );
     }
 
-    // ============ LANGKAH 6: TAMPILKAN REKOMENDASI JURUSAN ============
+    // =========================================================
+    // LANGKAH 5: KONFIRMASI HASIL OCR
+    // =========================================================
+
+    public function ocrReviewForm(
+        OcrService $ocrService
+    ) {
+        $data =
+            $this->wizardData();
+
+        if (
+            empty(
+                $data['report_cards']
+                ?? []
+            )
+        ) {
+            return redirect()
+                ->route(
+                    'ppdb.wizard.reportCard'
+                )
+                ->with(
+                    'error',
+                    'Upload foto rapor terlebih dahulu.'
+                );
+        }
+
+        return view(
+            'ppdb.wizard.step5-ocr-review',
+            [
+                'subjects' =>
+                    $ocrService->getSubjects(),
+
+                'grades' =>
+                    $data['grades']
+                    ?? [],
+
+                'confidence' =>
+                    $data['ocr_confidence']
+                    ?? 0,
+            ]
+        );
+    }
+
+    public function ocrReviewStore(
+        Request $request,
+        SawService $sawService
+    ) {
+        $validated =
+            $request->validate([
+                'grades' =>
+                    'required|array',
+
+                'grades.*' =>
+                    'nullable|numeric|min:0|max:100',
+            ]);
+
+        /*
+         * Ambil hanya nilai yang benar-benar diisi.
+         */
+        $confirmedGrades =
+            array_filter(
+                $validated['grades'],
+                fn ($value) =>
+                    $value !== null &&
+                    $value !== ''
+            );
+
+        /*
+         * Hitung SAW berdasarkan nilai
+         * yang sudah dikonfirmasi.
+         */
+        $sawCalculation =
+            $sawService->calculateFromGrades(
+                $confirmedGrades
+            );
+
+        /*
+         * Simpan hasil konfirmasi.
+         */
+        $this->putWizardData([
+            'grades' =>
+                $confirmedGrades,
+
+            'grades_confirmed' =>
+                true,
+
+            'saw_scores' =>
+                $sawCalculation['scores'],
+
+            'recommended_slug' =>
+                $sawCalculation['recommended_slug'],
+        ]);
+
+        return redirect()->route(
+            'ppdb.wizard.recommendation'
+        );
+    }
+
+    // =========================================================
+    // LANGKAH 6: REKOMENDASI JURUSAN
+    // =========================================================
+
     public function recommendationShow()
     {
-        $data = $this->wizardData();
+        $data =
+            $this->wizardData();
 
-        if (empty($data['recommended_slug'])) {
-            return redirect()->route('ppdb.wizard.ocrReview')->with('error', 'Konfirmasi nilai terlebih dahulu.');
+        if (
+            empty(
+                $data['recommended_slug']
+                ?? null
+            )
+        ) {
+            return redirect()
+                ->route(
+                    'ppdb.wizard.ocrReview'
+                )
+                ->with(
+                    'error',
+                    'Konfirmasi nilai terlebih dahulu.'
+                );
         }
 
-        $recommendedMajor = Major::where('slug', $data['recommended_slug'])->first();
-        $majors = Major::orderBy('name')->get();
+        $recommendedMajor =
+            Major::where(
+                'slug',
+                $data['recommended_slug']
+            )->first();
 
-        return view('ppdb.wizard.step6-recommendation', [
-            'recommendedMajor' => $recommendedMajor,
-            'scores' => $data['saw_scores'] ?? [],
-            'majors' => $majors,
-        ]);
+        $majors =
+            Major::orderBy('name')
+                ->get();
+
+        return view(
+            'ppdb.wizard.step6-recommendation',
+            [
+                'recommendedMajor' =>
+                    $recommendedMajor,
+
+                'scores' =>
+                    $data['saw_scores']
+                    ?? [],
+
+                'majors' =>
+                    $majors,
+            ]
+        );
     }
 
-    // ============ LANGKAH 7: SISWA MEMILIH JURUSAN (final) ============
+    // =========================================================
+    // LANGKAH 7: PILIH JURUSAN
+    // =========================================================
+
     public function majorChoiceForm()
     {
-        $data = $this->wizardData();
-        $majors = Major::orderBy('name')->get();
-        $recommendedSlug = $data['recommended_slug'] ?? null;
+        $data =
+            $this->wizardData();
 
-        return view('ppdb.wizard.step7-major-choice', compact('majors', 'recommendedSlug'));
+        $majors =
+            Major::orderBy('name')
+                ->get();
+
+        $recommendedSlug =
+            $data['recommended_slug']
+            ?? null;
+
+        return view(
+            'ppdb.wizard.step7-major-choice',
+            compact(
+                'majors',
+                'recommendedSlug'
+            )
+        );
     }
 
-    // ============ SUBMIT FINAL: simpan semua ke database, generate nomor pendaftaran ============
-    public function submitFinal(Request $request, SawService $sawService)
-    {
-        $validated = $request->validate([
-            'major_choice_1' => 'required|exists:majors,id',
-            'major_choice_2' => 'nullable|exists:majors,id|different:major_choice_1',
-            'major_choice_3' => 'nullable|exists:majors,id|different:major_choice_1|different:major_choice_2',
-        ]);
+    // =========================================================
+    // SUBMIT FINAL
+    // =========================================================
 
-        $data = $this->wizardData();
+    public function submitFinal(
+        Request $request,
+        SawService $sawService
+    ) {
+        $validated =
+            $request->validate([
+                'major_choice_1' =>
+                    'required|exists:majors,id',
 
-        if (empty($data['biodata']) || empty($data['parents'])) {
-            return redirect()->route('ppdb.wizard.biodata')->with('error', 'Data pendaftaran belum lengkap, silakan ulangi dari awal.');
+                'major_choice_2' =>
+                    'nullable|exists:majors,id|different:major_choice_1',
+
+                'major_choice_3' =>
+                    'nullable|exists:majors,id|different:major_choice_1|different:major_choice_2',
+            ]);
+
+        $data =
+            $this->wizardData();
+
+        /*
+         * Pastikan biodata dan orang tua sudah ada.
+         */
+        if (
+            empty($data['biodata'] ?? []) ||
+            empty($data['parents'] ?? [])
+        ) {
+            return redirect()
+                ->route(
+                    'ppdb.wizard.biodata'
+                )
+                ->with(
+                    'error',
+                    'Data pendaftaran belum lengkap, silakan ulangi dari awal.'
+                );
         }
 
-        $registration = DB::transaction(function () use ($data, $validated) {
+        /*
+         * =========================================================
+         * TRANSACTION
+         * =========================================================
+         */
+        $registration =
+            DB::transaction(
+                function () use (
+                    $data,
+                    $validated,
+                    $sawService
+                ) {
 
-            // Langkah 10 & 11: submit + generate nomor pendaftaran (otomatis lewat model event)
-            $registration = Registration::create(['status' => 'submitted']);
+                    // =================================================
+                    // 1. BUAT APPLICANT
+                    // =================================================
 
-            $registration->biodata()->create($data['biodata']);
-            $registration->parentData()->create($data['parents']);
+                    $biodata =
+                        $data['biodata'];
 
-            // Pindahkan dokumen dari folder temp ke folder final milik pendaftaran ini
-            foreach (($data['documents'] ?? []) as $field => $doc) {
-                $registration->documents()->create([
-                    'document_type' => $doc['label'],
-                    'file_path' => $doc['path'],
-                    'file_name' => $doc['name'],
-                ]);
-            }
+                    $applicant =
+                        \App\Models\PPDB\Applicant::create([
+                            'full_name' =>
+                                $biodata['name']
+                                ?? '',
 
-            // Simpan SEMUA foto rapor yang diupload (bisa lebih dari 1 semester)
-            // beserta hasil OCR mentah masing-masing foto (buat arsip/histori).
-            foreach (($data['report_cards'] ?? []) as $index => $rc) {
-                $reportCard = $registration->reportCards()->create([
-                    'file_path' => $rc['path'],
-                    'file_name' => $rc['name'] ?? 'rapor.jpg',
-                    'uploaded_at' => now(),
-                ]);
+                            'nisn' =>
+                                $biodata['nisn']
+                                ?? null,
 
-                $reportCard->ocrResult()->create([
-                    'raw_text' => $rc['raw_text'] ?? '',
-                    'extracted_data' => $rc['grades'] ?? [],
-                    // Nilai gabungan (rata-rata semua semester) yang sudah dikonfirmasi siswa
-                    // dianggap "final" — ditandai confirmed di foto pertama sebagai acuan utama.
-                    'confidence_score' => $rc['confidence'] ?? 0,
-                    'is_confirmed' => $index === 0, // foto pertama jadi acuan status konfirmasi
-                ]);
-            }
+                            'email' =>
+                                $biodata['email']
+                                ?? null,
 
+                            'phone' =>
+                                $biodata['phone']
+                                ?? null,
 
-            // Simpan hasil SAW yang sudah dihitung di langkah 5
-            if (!empty($data['grades'])) {
-                $sawService->saveResult($registration, $data['grades']);
-            }
+                            'address' =>
+                                $biodata['address']
+                                ?? null,
 
-            // Simpan pilihan jurusan final
-            foreach ([1, 2, 3] as $order) {
-                $majorId = $validated["major_choice_{$order}"] ?? null;
-                if ($majorId) {
-                    $registration->majorChoices()->create([
-                        'major_id' => $majorId,
-                        'choice_order' => $order,
-                    ]);
+                            'previous_school' =>
+                                $biodata['school_origin']
+                                ?? null,
+                        ]);
+
+                    // =================================================
+                    // 2. BUAT REGISTRATION
+                    // =================================================
+
+                    $registration =
+                        Registration::create([
+                            'applicant_id' =>
+                                $applicant->id,
+
+                            'registration_number' =>
+                                $applicant->registration_number,
+
+                            'status' =>
+                                'submitted',
+                        ]);
+
+                    // =================================================
+                    // 3. SIMPAN BIODATA
+                    // =================================================
+
+                    $registration
+                        ->biodata()
+                        ->create(
+                            $data['biodata']
+                        );
+
+                    // =================================================
+                    // 4. SIMPAN DATA ORANG TUA
+                    // =================================================
+
+                    $registration
+                        ->parentData()
+                        ->create(
+                            $data['parents']
+                        );
+
+                    // =================================================
+                    // 5. SIMPAN DOKUMEN
+                    // =================================================
+
+                    foreach (
+                        (
+                            $data['documents']
+                            ?? []
+                        ) as $field => $doc
+                    ) {
+
+                        $documentType =
+                            match (
+                                strtolower(
+                                    trim(
+                                        $doc['label']
+                                        ?? ''
+                                    )
+                                )
+                            ) {
+
+                                'kartu keluarga',
+                                'kk'
+                                    => 'kk',
+
+                                'akte kelahiran',
+                                'akta kelahiran'
+                                    => 'akta_kelahiran',
+
+                                'rapor'
+                                    => 'rapor',
+
+                                'pas foto',
+                                'pasfoto'
+                                    => 'pas_foto',
+
+                                'kip'
+                                    => 'kip',
+
+                                'surat keterangan lulus',
+                                'ijazah / surat keterangan lulus'
+                                    => 'surat_keterangan_lulus',
+
+                                default
+                                    => 'lainnya',
+                            };
+
+                        $registration
+                            ->documents()
+                            ->create([
+                                'document_type' =>
+                                    $documentType,
+
+                                'file_path' =>
+                                    $doc['path'],
+
+                                'file_name' =>
+                                    $doc['name']
+                                    ?? null,
+                            ]);
+                    }
+
+                    // =================================================
+                    // 6. SIMPAN SEMUA FOTO RAPOR + OCR
+                    // =================================================
+
+                    foreach (
+                        (
+                            $data['report_cards']
+                            ?? []
+                        ) as $index => $rc
+                    ) {
+
+                        $reportCard =
+                            $registration
+                                ->reportCards()
+                                ->create([
+                                    'file_path' =>
+                                        $rc['path'],
+
+                                    'file_name' =>
+                                        $rc['name']
+                                        ?? 'rapor.jpg',
+
+                                    'mime_type' =>
+                                        $rc['mime_type']
+                                        ?? null,
+
+                                    'file_size' =>
+                                        $rc['file_size']
+                                        ?? null,
+                                ]);
+
+                        $reportCard
+                            ->ocrResult()
+                            ->create([
+                                'raw_text' =>
+                                    $rc['raw_text']
+                                    ?? '',
+
+                                'extracted_data' =>
+                                    $rc['grades']
+                                    ?? [],
+
+                                'confidence_score' =>
+                                    $rc['confidence']
+                                    ?? 0,
+
+                                /*
+                                 * Hanya foto pertama
+                                 * ditandai sebagai confirmed
+                                 * sesuai struktur lama.
+                                 */
+                                'is_confirmed' =>
+                                    $index === 0,
+                            ]);
+                    }
+
+                    // =================================================
+                    // 7. SIMPAN HASIL SAW
+                    // =================================================
+
+                    if (
+                        !empty(
+                            $data['grades']
+                            ?? []
+                        )
+                    ) {
+
+                        $sawService->saveResult(
+                            $registration,
+                            $data['grades']
+                        );
+                    }
+
+                    // =================================================
+                    // 8. SIMPAN PILIHAN JURUSAN
+                    // =================================================
+
+                    foreach (
+                        [1, 2, 3]
+                        as $order
+                    ) {
+
+                        $majorId =
+                            $validated[
+                                "major_choice_{$order}"
+                            ]
+                            ?? null;
+
+                        if (!$majorId) {
+                            continue;
+                        }
+
+                        $registration
+                            ->majorChoices()
+                            ->create([
+                                'major_id' =>
+                                    $majorId,
+
+                                'choice_order' =>
+                                    $order,
+                            ]);
+                    }
+
+                    return $registration;
                 }
-            }
+            );
 
-            return $registration;
-        });
+        // =========================================================
+        // 9. HAPUS SESSION WIZARD
+        // =========================================================
 
-        session()->forget($this->sessionKey); // bersihkan data wizard, sudah pindah semua ke database
+        session()->forget(
+            $this->sessionKey
+        );
 
-        return redirect()->route('ppdb.wizard.result', $registration->registration_number);
+        // =========================================================
+        // 10. HALAMAN HASIL
+        // =========================================================
+
+        return redirect()->route(
+            'ppdb.wizard.result',
+            $registration->registration_number
+        );
     }
 
-    // ============ HASIL AKHIR: nomor pendaftaran + download bukti PDF ============
-    public function result(string $registrationNumber)
-    {
-        $registration = Registration::with(['biodata', 'majorChoices.major', 'sawResult.recommendedMajor'])
-            ->where('registration_number', $registrationNumber)
+    // =========================================================
+    // HASIL AKHIR
+    // =========================================================
+
+    public function result(
+        string $registrationNumber
+    ) {
+        $registration =
+            Registration::with([
+                'biodata',
+                'majorChoices.major',
+                'sawResult.recommendedMajor',
+            ])
+            ->where(
+                'registration_number',
+                $registrationNumber
+            )
             ->firstOrFail();
 
-        return view('ppdb.wizard.result', compact('registration'));
+        return view(
+            'ppdb.wizard.result',
+            compact('registration')
+        );
     }
 
-    public function downloadProofPdf(string $registrationNumber)
-    {
-        $registration = Registration::with(['biodata', 'parentData', 'majorChoices.major', 'sawResult.recommendedMajor'])
-            ->where('registration_number', $registrationNumber)
+    // =========================================================
+    // DOWNLOAD BUKTI PDF
+    // =========================================================
+
+    public function downloadProofPdf(
+        string $registrationNumber
+    ) {
+        $registration =
+            Registration::with([
+                'biodata',
+                'parentData',
+                'majorChoices.major',
+                'sawResult.recommendedMajor',
+            ])
+            ->where(
+                'registration_number',
+                $registrationNumber
+            )
             ->firstOrFail();
 
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('ppdb.wizard.proof-pdf', compact('registration'))
-            ->setPaper('a4', 'portrait');
+        $pdf =
+            \Barryvdh\DomPDF\Facade\Pdf::loadView(
+                'ppdb.wizard.proof-pdf',
+                compact('registration')
+            )
+            ->setPaper(
+                'a4',
+                'portrait'
+            );
 
-        return $pdf->download('Bukti-Pendaftaran-' . $registration->registration_number . '.pdf');
+        return $pdf->download(
+            'Bukti-Pendaftaran-' .
+            $registration->registration_number .
+            '.pdf'
+        );
     }
 }

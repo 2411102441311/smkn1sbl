@@ -4,17 +4,12 @@ namespace App\Services;
 
 use App\Models\PPDB\OcrResult;
 use App\Models\PPDB\ReportCard;
-use Illuminate\Support\Facades\Log;
 use thiagoalessio\TesseractOCR\TesseractOCR;
 
-/**
- * Service untuk membaca teks dan nilai mata pelajaran
- * dari foto rapor/SKL menggunakan Tesseract OCR.
- */
 class OcrService
 {
     /**
-     * Mapel inti yang digunakan untuk proses SPK/SAW.
+     * Nilai inti yang digunakan oleh SPK/SAW.
      */
     protected array $subjects = [
         'Matematika',
@@ -25,13 +20,86 @@ class OcrService
     ];
 
     /**
-     * Ekstrak teks dan nilai dari satu foto.
+     * Ekstrak OCR dari satu file.
+     *
+     * Mendukung:
+     * - Rapor tabel
+     * - SKL
      */
     public function extractFromPath(string $absoluteImagePath): array
     {
-        $rawText = $this->extractText($absoluteImagePath);
-        $grades = $this->parseGrades($rawText);
-        $confidence = $this->estimateConfidence($grades);
+        if (!is_file($absoluteImagePath)) {
+            \Log::error('File OCR tidak ditemukan', [
+                'image' => $absoluteImagePath,
+            ]);
+
+            return [
+                'raw_text' => '',
+                'grades' => [],
+                'confidence' => 0,
+            ];
+        }
+
+        /*
+         * PSM 4:
+         * Cocok untuk tabel rapor.
+         *
+         * PSM 11:
+         * Cocok untuk SKL/dokumen yang teksnya tersebar.
+         */
+        $textPsm4 = $this->extractText(
+            $absoluteImagePath,
+            4
+        );
+
+        $textPsm11 = $this->extractText(
+            $absoluteImagePath,
+            11
+        );
+
+        /*
+         * Parse PSM 4 terlebih dahulu.
+         */
+        $grades = $this->parseGrades(
+            $textPsm4,
+            true
+        );
+
+        /*
+         * PSM 11 hanya digunakan untuk melengkapi
+         * nilai yang belum ditemukan.
+         */
+        $gradesPsm11 = $this->parseGrades(
+            $textPsm11,
+            false
+        );
+
+        foreach ($gradesPsm11 as $subject => $value) {
+            if (!isset($grades[$subject])) {
+                $grades[$subject] = $value;
+            }
+        }
+
+        /*
+         * Bentuk IPA dan IPS.
+         */
+        $grades = $this->buildDerivedGrades(
+            $grades
+        );
+
+        /*
+         * Confidence berdasarkan 5 nilai inti.
+         */
+        $confidence = $this->calculateConfidence(
+            $grades
+        );
+
+        $rawText = trim(
+            "===== OCR PSM 4 =====\n" .
+            $textPsm4 .
+            "\n\n===== OCR PSM 11 =====\n" .
+            $textPsm11
+        );
 
         return [
             'raw_text' => $rawText,
@@ -41,42 +109,83 @@ class OcrService
     }
 
     /**
-     * Ekstrak teks dan nilai dari beberapa foto rapor.
+     * Ekstrak beberapa foto.
      *
-     * Semua teks digabung terlebih dahulu agar nilai dari
-     * beberapa halaman/semester dapat diproses bersama.
+     * Nilai dari semua foto digabung dan dirata-ratakan
+     * berdasarkan mata pelajaran.
      */
-    public function extractFromPaths(array $absoluteImagePaths): array
-    {
-        $combinedText = '';
+    public function extractFromPaths(
+        array $absoluteImagePaths
+    ): array {
+        $allTexts = [];
+        $gradesPerSubject = [];
 
         foreach ($absoluteImagePaths as $path) {
-            $combinedText .= $this->extractText($path) . "\n";
+
+            if (!is_file($path)) {
+                continue;
+            }
+
+            $result = $this->extractFromPath($path);
+
+            if ($result['raw_text'] !== '') {
+                $allTexts[] = $result['raw_text'];
+            }
+
+            foreach ($result['grades'] as $subject => $value) {
+                $gradesPerSubject[$subject][] = $value;
+            }
         }
 
-        $grades = $this->parseGrades($combinedText);
-        $confidence = $this->estimateConfidence($grades);
+        /*
+         * Rata-rata nilai yang muncul pada beberapa foto.
+         */
+        $grades = [];
+
+        foreach ($gradesPerSubject as $subject => $values) {
+
+            if (empty($values)) {
+                continue;
+            }
+
+            $grades[$subject] = round(
+                array_sum($values) / count($values),
+                2
+            );
+        }
+
+        $confidence = $this->calculateConfidence(
+            $grades
+        );
 
         return [
-            'raw_text' => $combinedText,
+            'raw_text' => implode(
+                "\n\n",
+                $allTexts
+            ),
             'grades' => $grades,
             'confidence' => $confidence,
         ];
     }
 
     /**
-     * Proses satu data rapor dan simpan hasil OCR ke database.
+     * Simpan hasil OCR ke database.
      */
-    public function process(ReportCard $reportCard): OcrResult
-    {
+    public function process(
+        ReportCard $reportCard
+    ): OcrResult {
         $imagePath = storage_path(
             'app/public/' . $reportCard->file_path
         );
 
-        $result = $this->extractFromPath($imagePath);
+        $result = $this->extractFromPath(
+            $imagePath
+        );
 
         return OcrResult::updateOrCreate(
-            ['report_card_id' => $reportCard->id],
+            [
+                'report_card_id' => $reportCard->id,
+            ],
             [
                 'raw_text' => $result['raw_text'],
                 'extracted_data' => $result['grades'],
@@ -87,40 +196,57 @@ class OcrService
     }
 
     /**
-     * Jalankan Tesseract OCR.
-     *
-     * Tesseract diarahkan langsung ke lokasi instalasi Windows
-     * supaya tetap bisa dipanggil oleh Laravel web server.
-     *
-     * PSM 11 digunakan karena foto rapor memiliki teks dan
-     * kolom nilai yang tersebar di berbagai bagian halaman.
+     * Menjalankan Tesseract.
      */
-    protected function extractText(string $imagePath): string
-    {
+    protected function extractText(
+        string $imagePath,
+        int $psm = 4
+    ): string {
         try {
-            $tesseract = new TesseractOCR($imagePath);
+
+            $tesseractPath = env(
+                'TESSERACT_PATH',
+                'D:\\Program Files\\Tesseract-OCR\\tesseract.exe'
+            );
+
+            $tessdataPath = env(
+                'TESSDATA_PATH',
+                'D:\\Program Files\\Tesseract-OCR\\tessdata'
+            );
+
+            $tesseract = new TesseractOCR(
+                $imagePath
+            );
 
             $tesseract
-                ->executable('C:\Program Files\Tesseract-OCR\tesseract.exe')
-                ->tessdataDir('C:\Program Files\Tesseract-OCR\tessdata')
+                ->executable($tesseractPath)
+                ->tessdataDir($tessdataPath)
                 ->lang('ind', 'eng')
-                ->psm(11);
+                ->psm($psm);
 
             $result = $tesseract->run();
 
-            Log::info('OCR berhasil dijalankan', [
-                'image' => $imagePath,
-                'text_length' => strlen($result),
-            ]);
+            \Log::info(
+                'OCR berhasil dijalankan',
+                [
+                    'image' => $imagePath,
+                    'psm' => $psm,
+                    'text_length' => strlen($result),
+                ]
+            );
 
             return $result;
 
         } catch (\Throwable $e) {
 
-            Log::error('OCR gagal dijalankan', [
-                'image' => $imagePath,
-                'error' => $e->getMessage(),
-            ]);
+            \Log::error(
+                'OCR gagal dijalankan',
+                [
+                    'image' => $imagePath,
+                    'psm' => $psm,
+                    'error' => $e->getMessage(),
+                ]
+            );
 
             report($e);
 
@@ -129,215 +255,556 @@ class OcrService
     }
 
     /**
-     * Ambil nilai mata pelajaran dari hasil OCR.
-     *
-     * OCR pada tabel rapor tidak selalu mempertahankan posisi
-     * kolom dengan sempurna. Karena itu parser mencoba:
-     *
-     * 1. Nilai setelah nama mapel.
-     * 2. Nilai beberapa baris setelah nama mapel.
-     * 3. Nilai sebelum nama mapel.
+     * Parse nilai dari OCR.
      */
+    protected function parseGrades(
+        string $text,
+        bool $isRapor = true
+    ): array {
+        $results = [];
 
-    private function parseGrades(string $text): array
-{
-    $subjects = [
-        'Matematika',
-        'Bahasa Indonesia',
-        'Bahasa Inggris',
-        'IPA',
-        'IPS',
-    ];
+        if (trim($text) === '') {
+            return $results;
+        }
 
-    // Normalisasi teks OCR
-    $text = str_replace(["\r\n", "\r"], "\n", $text);
-    $text = preg_replace('/[ \t]+/', ' ', $text);
+        $lines = preg_split(
+            '/\r\n|\r|\n/',
+            $text
+        );
 
-    $lines = array_values(array_filter(
-        array_map('trim', explode("\n", $text)),
-        fn ($line) => $line !== ''
-    ));
-
-    $grades = [];
-
-    foreach ($subjects as $subject) {
-        $subjectKey = strtolower($subject);
-        $foundGrade = null;
+        if (!$lines) {
+            return $results;
+        }
 
         /*
-         * ============================================================
-         * 1. CARI MAPEL DAN NILAI DI BARIS YANG SAMA
-         * Contoh:
-         * Matematika 85
-         * Bahasa Indonesia 87
-         * ============================================================
+         * Daftar mapel yang dicari.
          */
-        foreach ($lines as $index => $line) {
-            $normalizedLine = strtolower($line);
+        $subjects = [
+            'Bahasa Indonesia' => [
+                'Bahasa Indonesia',
+                'Bahasa indonesia',
+            ],
 
-            if (!str_contains($normalizedLine, $subjectKey)) {
+            'Bahasa Inggris' => [
+                'Bahasa Inggris',
+            ],
+
+            'Matematika' => [
+                'Matematika',
+            ],
+
+            '_Fisika' => [
+                'Fisika',
+                'Fisike',
+            ],
+
+            '_Kimia' => [
+                'Kimia',
+            ],
+
+            '_Sejarah' => [
+                'Sejarah Indonesia',
+                'Sejarah',
+            ],
+        ];
+
+        foreach ($subjects as $subject => $patterns) {
+
+            /*
+             * Cari kemunculan nama mapel.
+             */
+            foreach ($lines as $index => $line) {
+
+                $line = trim($line);
+
+                if ($line === '') {
+                    continue;
+                }
+
+                $matchedPattern = null;
+
+                foreach ($patterns as $pattern) {
+
+                    if (
+                        stripos(
+                            $line,
+                            $pattern
+                        ) !== false
+                    ) {
+                        $matchedPattern = $pattern;
+                        break;
+                    }
+                }
+
+                if ($matchedPattern === null) {
+                    continue;
+                }
+
+                /*
+                 * Ambil angka dari baris yang sama
+                 * setelah nama mapel.
+                 */
+                $position = stripos(
+                    $line,
+                    $matchedPattern
+                );
+
+                $afterSubject = substr(
+                    $line,
+                    $position +
+                    strlen($matchedPattern)
+                );
+
+                $numbers = $this->extractNumbers(
+                    $afterSubject
+                );
+
+                /*
+                 * Kalau belum cukup, cari angka
+                 * pada beberapa baris berikutnya.
+                 */
+                for (
+                    $offset = 1;
+                    $offset <= 8;
+                    $offset++
+                ) {
+
+                    if (
+                        !isset(
+                            $lines[
+                                $index + $offset
+                            ]
+                        )
+                    ) {
+                        break;
+                    }
+
+                    $nextLine = trim(
+                        $lines[
+                            $index + $offset
+                        ]
+                    );
+
+                    if ($nextLine === '') {
+                        continue;
+                    }
+
+                    /*
+                     * Kalau ketemu mapel lain,
+                     * jangan mengambil nilai mapel tersebut.
+                     */
+                    if (
+                        $this->isAnotherSubject(
+                            $nextLine,
+                            $subject
+                        )
+                    ) {
+                        break;
+                    }
+
+                    $lineNumbers =
+                        $this->extractNumbers(
+                            $nextLine
+                        );
+
+                    foreach (
+                        $lineNumbers
+                        as $number
+                    ) {
+                        $numbers[] = $number;
+                    }
+
+                    /*
+                     * Untuk rapor:
+                     * cukup 3 angka:
+                     *
+                     * Pengetahuan
+                     * Keterampilan
+                     * Nilai Akhir
+                     */
+                    if (
+                        count($numbers) >= 3
+                    ) {
+                        break;
+                    }
+
+                    /*
+                     * Untuk SKL cukup 1 nilai.
+                     */
+                    if (
+                        !$isRapor &&
+                        count($numbers) >= 1
+                    ) {
+                        break;
+                    }
+                }
+
+                /*
+                 * Hilangkan angka duplikat berurutan.
+                 */
+                $numbers = $this->cleanNumbers(
+                    $numbers
+                );
+
+                if (empty($numbers)) {
+                    continue;
+                }
+
+                /*
+                 * =====================================================
+                 * FORMAT RAPOR
+                 * =====================================================
+                 *
+                 * Contoh:
+                 *
+                 * Bahasa Indonesia
+                 * 73
+                 * 81
+                 * 77
+                 *
+                 * Ambil angka terakhir dari tiga nilai.
+                 */
+                if (
+                    $isRapor &&
+                    count($numbers) >= 3
+                ) {
+
+                    $lastThree = array_slice(
+                        $numbers,
+                        -3
+                    );
+
+                    $knowledge =
+                        $lastThree[0];
+
+                    $skill =
+                        $lastThree[1];
+
+                    $final =
+                        $lastThree[2];
+
+                    /*
+                     * Jika nilai akhir valid,
+                     * gunakan langsung.
+                     */
+                    if (
+                        $final >= 60 &&
+                        $final <= 100
+                    ) {
+                        $results[$subject] =
+                            $final;
+
+                        break;
+                    }
+
+                    /*
+                     * Kalau OCR salah membaca nilai akhir
+                     * menjadi angka seperti "7",
+                     * gunakan rata-rata pengetahuan
+                     * dan keterampilan.
+                     */
+                    if (
+                        $knowledge >= 60 &&
+                        $knowledge <= 100 &&
+                        $skill >= 60 &&
+                        $skill <= 100
+                    ) {
+                        $results[$subject] =
+                            round(
+                                (
+                                    $knowledge +
+                                    $skill
+                                ) / 2,
+                                2
+                            );
+
+                        break;
+                    }
+                }
+
+                /*
+                 * =====================================================
+                 * FORMAT SKL
+                 * =====================================================
+                 *
+                 * Contoh:
+                 *
+                 * Bahasa Indonesia
+                 * 87,00
+                 */
+                if (
+                    !$isRapor &&
+                    !empty($numbers)
+                ) {
+
+                    /*
+                     * Nilai terakhir biasanya
+                     * merupakan nilai mapel.
+                     */
+                    $validNumbers = array_filter(
+                        $numbers,
+                        function ($number) {
+                            return
+                                $number >= 60 &&
+                                $number <= 100;
+                        }
+                    );
+
+                    if (
+                        !empty($validNumbers)
+                    ) {
+                        $results[$subject] =
+                            (float) end(
+                                $validNumbers
+                            );
+
+                        break;
+                    }
+                }
+
+                /*
+                 * Fallback untuk rapor jika
+                 * OCR hanya mendapatkan satu nilai.
+                 */
+                if (
+                    $isRapor &&
+                    count($numbers) === 1
+                ) {
+
+                    if (
+                        $numbers[0] >= 60 &&
+                        $numbers[0] <= 100
+                    ) {
+                        $results[$subject] =
+                            $numbers[0];
+
+                        break;
+                    }
+                }
+            }
+        }
+
+        return $results;
+    }
+
+    /**
+     * Ambil angka dari teks.
+     */
+    protected function extractNumbers(
+        string $text
+    ): array {
+        preg_match_all(
+            '/(?<!\d)(\d{1,3}(?:[,.]\d{1,2})?)(?!\d)/',
+            $text,
+            $matches
+        );
+
+        $numbers = [];
+
+        foreach (
+            $matches[1] ?? []
+            as $number
+        ) {
+
+            $number = str_replace(
+                ',',
+                '.',
+                $number
+            );
+
+            $number = (float) $number;
+
+            /*
+             * Nilai rapor/SKL.
+             */
+            if (
+                $number >= 0 &&
+                $number <= 100
+            ) {
+                $numbers[] = $number;
+            }
+        }
+
+        return $numbers;
+    }
+
+    /**
+     * Bersihkan angka yang duplikat.
+     */
+    protected function cleanNumbers(
+        array $numbers
+    ): array {
+        $clean = [];
+
+        foreach ($numbers as $number) {
+
+            if (
+                empty($clean) ||
+                end($clean) !== $number
+            ) {
+                $clean[] = $number;
+            }
+        }
+
+        return $clean;
+    }
+
+    /**
+     * Cek apakah baris mengandung
+     * mata pelajaran lain.
+     */
+    protected function isAnotherSubject(
+        string $line,
+        string $currentSubject
+    ): bool {
+        $patterns = [
+            'Bahasa Indonesia',
+            'Bahasa Inggris',
+            'Matematika',
+            'Fisika',
+            'Fisike',
+            'Kimia',
+            'Sejarah Indonesia',
+        ];
+
+        foreach ($patterns as $pattern) {
+
+            if (
+                $pattern === $currentSubject
+            ) {
                 continue;
             }
 
-            // Ambil angka setelah nama mapel
-            $afterSubject = substr(
-                $line,
-                stripos($line, $subject)
-            );
-
-            $grade = $this->findGradeInText($afterSubject);
-
-            if ($grade !== null) {
-                $foundGrade = $grade;
-                break;
+            if (
+                stripos(
+                    $line,
+                    $pattern
+                ) !== false
+            ) {
+                return true;
             }
         }
 
-        /*
-         * ============================================================
-         * 2. KALAU TIDAK KETEMU, CARI DI SEKITAR POSISI MAPEL
-         *
-         * Karena OCR tabel sering jadi seperti:
-         *
-         * Matematika
-         * 85
-         *
-         * atau:
-         *
-         * Matematika
-         * Keterangan
-         * 85
-         *
-         * ============================================================
-         */
-        if ($foundGrade === null) {
-            foreach ($lines as $index => $line) {
-                if (!str_contains(strtolower($line), $subjectKey)) {
-                    continue;
-                }
-
-                // Cari sampai 8 baris setelah nama mapel
-                for ($offset = 1; $offset <= 8; $offset++) {
-                    $nextIndex = $index + $offset;
-
-                    if (!isset($lines[$nextIndex])) {
-                        break;
-                    }
-
-                    $candidate = $lines[$nextIndex];
-
-                    // Jangan masuk ke mapel lain
-                    if ($this->containsAnotherSubject($candidate, $subjects, $subject)) {
-                        break;
-                    }
-
-                    $grade = $this->findGradeInText($candidate);
-
-                    if ($grade !== null) {
-                        $foundGrade = $grade;
-                        break 2;
-                    }
-                }
-            }
-        }
-
-        /*
-         * ============================================================
-         * 3. KALAU MASIH TIDAK KETEMU, CARI SEBELUM MAPEL
-         *
-         * Beberapa layout tabel ketika di-OCR bisa membuat:
-         *
-         * 85
-         * Matematika
-         *
-         * ============================================================
-         */
-        if ($foundGrade === null) {
-            foreach ($lines as $index => $line) {
-                if (!str_contains(strtolower($line), $subjectKey)) {
-                    continue;
-                }
-
-                for ($offset = 1; $offset <= 5; $offset++) {
-                    $prevIndex = $index - $offset;
-
-                    if ($prevIndex < 0) {
-                        break;
-                    }
-
-                    $candidate = $lines[$prevIndex];
-
-                    if ($this->containsAnotherSubject($candidate, $subjects, $subject)) {
-                        break;
-                    }
-
-                    $grade = $this->findGradeInText($candidate);
-
-                    if ($grade !== null) {
-                        $foundGrade = $grade;
-                        break 2;
-                    }
-                }
-            }
-        }
-
-        if ($foundGrade !== null) {
-            $grades[$subject] = $foundGrade;
-        }
+        return false;
     }
 
-    return $grades;
-}
-    
+    /**
+     * Bentuk nilai IPA dan IPS.
+     *
+     * IPA:
+     * Fisika + Kimia / 2
+     *
+     * IPS:
+     * Sejarah Indonesia
+     */
+    protected function buildDerivedGrades(
+        array $grades
+    ): array {
+
+        $fisika =
+            $grades['_Fisika'] ?? null;
+
+        $kimia =
+            $grades['_Kimia'] ?? null;
+
+        $sejarah =
+            $grades['_Sejarah'] ?? null;
+
+        /*
+         * IPA.
+         */
+        if (
+            $fisika !== null &&
+            $kimia !== null
+        ) {
+
+            $grades['IPA'] =
+                round(
+                    (
+                        $fisika +
+                        $kimia
+                    ) / 2,
+                    2
+                );
+
+        } elseif ($fisika !== null) {
+
+            $grades['IPA'] =
+                $fisika;
+
+        } elseif ($kimia !== null) {
+
+            $grades['IPA'] =
+                $kimia;
+        }
+
+        /*
+         * IPS.
+         */
+        if ($sejarah !== null) {
+
+            $grades['IPS'] =
+                $sejarah;
+        }
+
+        /*
+         * Hapus nilai internal.
+         */
+        unset(
+            $grades['_Fisika'],
+            $grades['_Kimia'],
+            $grades['_Sejarah']
+        );
+
+        /*
+         * Hanya kirim 5 nilai inti.
+         */
+        return array_intersect_key(
+            $grades,
+            array_flip(
+                $this->subjects
+            )
+        );
+    }
+
+    /**
+     * Hitung confidence.
+     *
+     * 5 mapel = 100%
+     */
+    protected function calculateConfidence(
+        array $grades
+    ): float {
+
+        $found = 0;
+
+        foreach (
+            $this->subjects
+            as $subject
+        ) {
+
+            if (
+                isset($grades[$subject]) &&
+                $grades[$subject] !== null
+            ) {
+                $found++;
+            }
+        }
+
+        return round(
+            (
+                $found /
+                count($this->subjects)
+            ) * 100,
+            2
+        );
+    }
+
+    /**
+     * Daftar mapel untuk halaman konfirmasi.
+     */
     public function getSubjects(): array
     {
-        return [
-            'Matematika',
-            'Bahasa Indonesia',
-            'Bahasa Inggris',
-            'IPA',
-            'IPS',
-        ];
+        return $this->subjects;
     }
-}
-
-private function findGradeInText(string $text): ?float
-{
-    preg_match_all(
-        '/(?<!\d)(\d{1,3})(?:[,.](\d{1,2}))?(?!\d)/',
-        $text,
-        $matches,
-        PREG_SET_ORDER
-    );
-
-    foreach ($matches as $match) {
-        $value = (float) ($match[1] . (isset($match[2]) ? '.' . $match[2] : ''));
-
-        // Nilai rapor yang kita cari
-        if ($value >= 60 && $value <= 100) {
-            return $value;
-        }
-    }
-
-    return null;
-} 
-
-private function containsAnotherSubject(
-    string $line,
-    array $subjects,
-    string $currentSubject
-): bool {
-    $line = strtolower($line);
-
-    foreach ($subjects as $subject) {
-        if ($subject === $currentSubject) {
-            continue;
-        }
-
-        if (str_contains($line, strtolower($subject))) {
-            return true;
-        }
-    }
-
-    return false;
 }

@@ -13,9 +13,20 @@ class Biodata extends Model
     protected $table = 'ppdb_biodata';
 
     protected $fillable = [
-        'registration_id', 'nik', 'family_card_number', 'name', 'place_of_birth', 'date_of_birth',
-        'gender', 'height_cm', 'weight_kg', 'religion', 'address', 'school_origin',
-        'has_kip', 'kip_number',
+        'registration_id',
+        'nik',
+        'family_card_number',
+        'name',
+        'place_of_birth',
+        'date_of_birth',
+        'gender',
+        'height_cm',
+        'weight_kg',
+        'religion',
+        'address',
+        'school_origin',
+        'has_kip',
+        'kip_number',
     ];
 
     protected $casts = [
