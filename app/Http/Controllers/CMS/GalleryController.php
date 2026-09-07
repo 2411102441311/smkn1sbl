@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\CMS;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\MajorController;
 use App\Models\CMS\Gallery;
 use App\Models\CMS\Category;
 use Illuminate\Http\Request;
@@ -13,19 +14,22 @@ class GalleryController extends Controller
     {
         $galleries = Gallery::with('category')->latest()->paginate(20);
         $categories = Category::all();
-        return view('cms.gallery.index', compact('galleries', 'categories'));
+        $majors = MajorController::data(); // buat dropdown "Untuk Jurusan (opsional)"
+        return view('cms.gallery.index', compact('galleries', 'categories', 'majors'));
     }
 
     public function create()
     {
         $categories = Category::all();
-        return view('cms.gallery.form', compact('categories'));
+        $majors = MajorController::data();
+        return view('cms.gallery.form', compact('categories', 'majors'));
     }
 
     public function store(Request $request)
     {
         $data = $request->validate([
             'category_id' => 'nullable|exists:categories,id',
+            'major_slug' => 'nullable|string|max:50',
             'title' => 'required|string|max:255',
             'image' => 'required|image|max:4096',
             'caption' => 'nullable|string',

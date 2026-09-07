@@ -30,10 +30,7 @@ use App\Http\Controllers\ThemeManager\ThemeController;
 use App\Http\Controllers\ThemeManager\ThemeScheduleController;
 use App\Http\Controllers\ThemeManager\BannerController;
 
-use App\Http\Controllers\Pakar\QuestionController;
-use App\Http\Controllers\Pakar\KnowledgeBaseController;
-use App\Http\Controllers\Pakar\RuleController;
-use App\Http\Controllers\Pakar\ConsultationController;
+
 
 use App\Http\Controllers\SPK\CriteriaController;
 use App\Http\Controllers\SPK\AlternativeController;

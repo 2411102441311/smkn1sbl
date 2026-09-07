@@ -29,6 +29,17 @@
             </div>
 
             <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-slate-600 mb-1">Untuk Jurusan (opsional)</label>
+                <select name="major_slug" class="w-full rounded-lg border border-skblue-200 px-3 py-2 text-sm focus:ring-2 focus:ring-skblue-400 focus:outline-none">
+                    <option value="">— Galeri umum (bukan galeri jurusan tertentu) —</option>
+                    @foreach($majors as $major)
+                        <option value="{{ $major['slug'] }}">{{ $major['name'] }} ({{ $major['code'] }})</option>
+                    @endforeach
+                </select>
+                <p class="text-xs text-slate-400 mt-1">Kalau dipilih, foto ini otomatis muncul di bagian "Galeri Kegiatan" pada halaman detail jurusan itu.</p>
+            </div>
+
+            <div class="md:col-span-2">
                 <label class="block text-sm font-medium text-slate-600 mb-1">File Foto</label>
                 <input type="file" name="image" accept="image/*" required
                        class="w-full text-sm text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-skblue-600 file:text-white file:text-sm file:font-semibold hover:file:bg-skblue-700">
@@ -57,13 +68,21 @@
 
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             @forelse($galleries as $item)
+                @php
+                    $majorInfo = $item->major_slug ? collect($majors)->firstWhere('slug', $item->major_slug) : null;
+                @endphp
                 <div class="group relative rounded-xl overflow-hidden border border-skblue-100">
-                    <img src="{{ url('storage/'.$item->image_path) }}" class="w-full h-40 object-cover" alt="{{ $item->title }}">
+                    <img src="{{ asset('storage/'.$item->image_path) }}" class="w-full h-40 object-cover" alt="{{ $item->title }}">
                     <div class="p-3">
                         <p class="text-sm font-medium text-slate-700 truncate">{{ $item->title }}</p>
-                        @if($item->category)
-                            <p class="text-xs text-skblue-500">{{ $item->category->name }}</p>
-                        @endif
+                        <div class="flex flex-wrap gap-1 mt-1">
+                            @if($item->category)
+                                <span class="text-xs text-skblue-500">{{ $item->category->name }}</span>
+                            @endif
+                            @if($majorInfo)
+                                <span class="text-xs bg-skblue-50 text-skblue-600 rounded-full px-2 py-0.5">{{ $majorInfo['code'] }}</span>
+                            @endif
+                        </div>
                     </div>
                     <form action="{{ route('admin.cms.gallery.destroy', $item) }}" method="POST"
                           onsubmit="return confirm('Hapus foto ini?')"

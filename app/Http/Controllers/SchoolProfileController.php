@@ -87,7 +87,7 @@ class SchoolProfileController extends Controller
             //* Tenaga Kependidikan
             ['name' => 'Ika Dyah Wulandari, S.M.', 'subject' => 'Staff Pelaksana Bidang Kepegawaian, Arsip, dan Surat', 'nip' => '', 'foto' => 'staff/ika.jpeg'],
             ['name' => 'Ibnu Aziz, S.Pd.I.', 'subject' => 'Staff Pelaksana Bidang Analisis Jabatan, Analisis Beban Kerja, dan DAPODIK', 'nip' => '', 'foto' => 'staff/ibnu.jpeg'],
-            ['name' => 'Muhammad Al-Rasid, S.Pd.', 'subject' => 'Staff Pelaksana Bidang Bendahara Sekolah', 'nip' => '', 'foto' => 'staff/rasid.jpeg'],
+            ['name' => 'Muhammad Al-Rasid, S.Pd.', 'subject' => 'Staff Pelaksana Bidang Bendahara Sekolah dan DAPODIK', 'nip' => '', 'foto' => 'staff/rasid.jpeg'],
             ['name' => 'Aidul Ismail', 'subject' => 'Staff Pelaksana Bidang Sarana Prasarana dan Pembina Pramuka Putra', 'nip' => '', 'foto' => 'staff/aidul.jpeg'],
             ['name' => 'Maulidati', 'subject' => 'Staff Pelaksana Bidang Kesiswaan dan Perpustakaan', 'nip' => '', 'foto' => 'staff/maulidati.jpeg'],
         ];
@@ -103,11 +103,16 @@ class SchoolProfileController extends Controller
             ['name' => 'Pramuka', 'icon' => 'flag'],
             ['name' => 'OSIS', 'icon' => 'users'],
             ['name' => 'Futsal', 'icon' => 'futbol'],
-            ['name' => 'Basket', 'icon' => 'basketball'],
-            ['name' => 'Paskibra', 'icon' => 'flag'],
-            ['name' => 'Rohis', 'icon' => 'book'],
+            ['name' => 'English Club', 'icon' => 'futbol'],
+            ['name' => 'Paduan Suara', 'icon' => 'futbol'],
+            ['name' => 'Atletik', 'icon' => 'futbol'],
+            ['name' => 'Habsyi', 'icon' => 'futbol'],
+            ['name' => 'Tari', 'icon' => 'futbol'],
+            // ['name' => 'Basket', 'icon' => 'basketball'],
+            // ['name' => 'Paskibra', 'icon' => 'flag'],
+            ['name' => 'IT Club', 'icon' => 'book'],
             ['name' => 'PMR', 'icon' => 'heart'],
-            ['name' => 'Robotik', 'icon' => 'microchip'],
+           
         ];
 
         return view('profil', compact(

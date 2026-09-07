@@ -131,17 +131,40 @@
     <div class="h-10 md:h-16"></div>
 
     {{-- ============ PENGUMUMAN ============ --}}
-    @if($announcements->isNotEmpty())
+    @if ($announcements->isNotEmpty())
     <section id="pengumuman" class="max-w-7xl mx-auto px-6 py-6">
         <div class="bg-skblue-50 border border-skblue-100 rounded-2xl p-5 flex flex-col md:flex-row gap-4 md:items-center reveal">
             <span class="shrink-0 text-xs font-bold uppercase tracking-wide text-white bg-skblue-600 rounded-full px-3 py-1">Pengumuman</span>
-            <div class="flex-1 flex flex-wrap gap-x-8 gap-y-2 text-sm text-skblue-900">
+            <div class="flex-1 flex flex-wrap gap-x-3 gap-y-2 text-sm text-skblue-900">
                 @foreach($announcements as $a)
-                    <span>📌 {{ $a->title }}</span>
+                    <button type="button"
+                            onclick="openPengumumanModal(this)"
+                            data-title="{{ $a->title }}"
+                            data-body="{{ $a->body }}"
+                            data-tanggal="{{ $a->start_date->translatedFormat('d M Y') }}{{ $a->end_date ? ' – '.$a->end_date->translatedFormat('d M Y') : '' }}"
+                            class="inline-flex items-center gap-1.5 rounded-full bg-white hover:bg-skblue-600 hover:text-white border border-skblue-100 hover:border-skblue-600 px-3 py-1.5 transition-all duration-200 cursor-pointer">
+                        📌 {{ $a->title }}
+                    </button>
                 @endforeach
             </div>
         </div>
     </section>
+ 
+    {{-- Modal buat lihat isi lengkap pengumuman pas badge-nya diklik --}}
+    <div id="pengumumanModal"
+         class="hidden fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm items-center justify-center p-4"
+         onclick="if(event.target === this) closePengumumanModal()">
+        <div class="max-w-md w-full bg-white rounded-2xl shadow-2xl p-6 relative">
+            <button type="button" onclick="closePengumumanModal()"
+                    class="absolute top-4 right-4 w-8 h-8 rounded-full bg-skblue-50 hover:bg-skblue-100 text-skblue-600 flex items-center justify-center transition">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+            <span class="inline-block text-xs font-bold uppercase tracking-wide text-white bg-skblue-600 rounded-full px-3 py-1 mb-3">Pengumuman</span>
+            <h3 id="pengumumanModalTitle" class="font-display font-bold text-lg text-slate-800 mb-2 pr-8"></h3>
+            <p id="pengumumanModalTanggal" class="text-xs text-skblue-500 font-medium mb-3"></p>
+            <p id="pengumumanModalBody" class="text-sm text-slate-600 leading-relaxed"></p>
+        </div>
+    </div>
     @endif
 
     {{-- ============ SAMBUTAN KEPALA SEKOLAH ============ --}}
@@ -397,6 +420,29 @@
 
 @push('scripts')
 <script>
+     // Modal pengumuman: buka pas badge diklik, nampilin judul + tanggal + isi lengkap
+    function openPengumumanModal(el) {
+        document.getElementById('pengumumanModalTitle').textContent = el.dataset.title;
+        document.getElementById('pengumumanModalTanggal').textContent = el.dataset.tanggal;
+        document.getElementById('pengumumanModalBody').textContent = el.dataset.body;
+
+        const modal = document.getElementById('pengumumanModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closePengumumanModal() {
+        const modal = document.getElementById('pengumumanModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        document.body.style.overflow = '';
+    }
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') closePengumumanModal();
+    });
+
     // Lightbox galeri: buka modal pas foto diklik, nampilin gambar penuh + judul + deskripsi
     function openGaleriLightbox(el) {
         document.getElementById('galeriLightboxImg').src = el.dataset.src;

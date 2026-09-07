@@ -58,29 +58,32 @@
                     </div>
                 </div>
 
-                {{-- Galeri jurusan --}}
+                {{-- Galeri jurusan — otomatis narik foto yang ditandain "Untuk Jurusan" ini
+                     lewat menu Galeri Foto di admin (gak perlu upload manual ke folder lagi) --}}
                 <div class="reveal">
-                    <h3 class="font-display font-bold text-xl text-slate-800 mb-5">Galeri Kegiatan</h3>
-                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                        @php
-                            $galleryPath = "images/jurusan/{$major['slug']}";
-                        @endphp
-                        @for($i = 1; $i <= 6; $i++)
-                            @php $imgFile = public_path("{$galleryPath}/{$i}.jpg"); @endphp
-                            <div class="rounded-2xl overflow-hidden h-32 sm:h-36 bg-skblue-100 reveal-zoom">
-                                @if(file_exists($imgFile))
-                                    <img src="{{ asset("{$galleryPath}/{$i}.jpg") }}" class="w-full h-full object-cover hover:scale-105 transition duration-300" alt="Galeri {{ $major['name'] }}">
-                                @else
-                                    <div class="w-full h-full flex items-center justify-center text-skblue-300 text-xs text-center px-2">
-                                        Foto {{ $i }} belum diunggah
-                                    </div>
-                                @endif
-                            </div>
-                        @endfor
-                    </div>
-                    <p class="text-xs text-slate-400 mt-3">
-                        * Taruh foto kegiatan jurusan ini di folder <code class="bg-slate-100 px-1.5 py-0.5 rounded">public/{{ $galleryPath }}/</code> dengan nama <code class="bg-slate-100 px-1.5 py-0.5 rounded">1.jpg</code> sampai <code class="bg-slate-100 px-1.5 py-0.5 rounded">6.jpg</code>.
-                    </p>
+                    <h3 class="font-display font-bold text-xl text-slate-800 mb-5">Galeri Kegiatan dan Fasilitas</h3>
+                    @php
+                        $majorGallery = \App\Models\CMS\Gallery::where('major_slug', $major['slug'])->latest()->get();
+                    @endphp
+                    @if($majorGallery->isNotEmpty())
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                            @foreach($majorGallery as $item)
+                                <button type="button"
+                                        onclick="openJurusanGaleriLightbox(this)"
+                                        data-src="{{ asset('storage/'.$item->image_path) }}"
+                                        data-title="{{ $item->title }}"
+                                        data-caption="{{ $item->caption ?? '' }}"
+                                        class="group relative rounded-2xl overflow-hidden h-32 sm:h-36 bg-skblue-100 reveal-zoom cursor-pointer text-left">
+                                    <img src="{{ asset('storage/'.$item->image_path) }}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" alt="{{ $item->title }}">
+                                </button>
+                            @endforeach
+                        </div>
+                    @else
+                        <p class="text-sm text-slate-400 bg-skblue-50/60 border border-skblue-100 rounded-2xl p-6 text-center">
+                            Belum ada foto galeri untuk jurusan ini. Admin bisa upload lewat menu "Galeri Foto" di panel admin,
+                            pilih "Untuk Jurusan" &rarr; {{ $major['name'] }}.
+                        </p>
+                    @endif
                 </div>
             </div>
 
@@ -152,4 +155,54 @@
     </section>
     @endif
 
+    {{-- ============ LIGHTBOX GALERI JURUSAN ============ --}}
+    <div id="jurusanGaleriLightbox"
+         class="hidden fixed inset-0 z-[100] bg-slate-900/90 backdrop-blur-sm items-center justify-center p-4 md:p-8"
+         onclick="if(event.target === this) closeJurusanGaleriLightbox()">
+        <button type="button" onclick="closeJurusanGaleriLightbox()"
+                class="absolute top-4 right-4 md:top-6 md:right-6 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+        <div class="max-w-3xl w-full bg-white rounded-2xl overflow-hidden shadow-2xl max-h-[90vh] flex flex-col">
+            <div class="bg-black shrink-0 flex items-center justify-center max-h-[65vh] overflow-hidden">
+                <img id="jurusanGaleriLightboxImg" src="" alt="" class="max-h-[65vh] w-full object-contain">
+            </div>
+            <div class="p-5 md:p-6 overflow-y-auto">
+                <h3 id="jurusanGaleriLightboxTitle" class="font-display font-bold text-lg text-slate-800 mb-2"></h3>
+                <p id="jurusanGaleriLightboxCaption" class="text-sm text-slate-500 leading-relaxed"></p>
+            </div>
+        </div>
+    </div>
+
 @endsection
+
+@push('scripts')
+<script>
+    function openJurusanGaleriLightbox(el) {
+        document.getElementById('jurusanGaleriLightboxImg').src = el.dataset.src;
+        document.getElementById('jurusanGaleriLightboxImg').alt = el.dataset.title;
+        document.getElementById('jurusanGaleriLightboxTitle').textContent = el.dataset.title;
+
+        const captionEl = document.getElementById('jurusanGaleriLightboxCaption');
+        captionEl.textContent = (el.dataset.caption && el.dataset.caption.trim() !== '')
+            ? el.dataset.caption
+            : 'Belum ada deskripsi untuk foto ini.';
+
+        const modal = document.getElementById('jurusanGaleriLightbox');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeJurusanGaleriLightbox() {
+        const modal = document.getElementById('jurusanGaleriLightbox');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        document.body.style.overflow = '';
+    }
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') closeJurusanGaleriLightbox();
+    });
+</script>
+@endpush

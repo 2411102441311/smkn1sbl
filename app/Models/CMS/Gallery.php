@@ -10,7 +10,7 @@ class Gallery extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['category_id', 'title', 'image_path', 'caption'];
+    protected $fillable = ['category_id', 'major_slug', 'title', 'image_path', 'caption'];
 
     public function category(): BelongsTo
     {

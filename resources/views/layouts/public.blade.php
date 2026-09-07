@@ -374,9 +374,17 @@
                         ['name' => 'facebook', 'path' => 'M22 12a10 10 0 10-11.6 9.9v-7H7.9V12h2.5V9.8c0-2.5 1.5-3.9 3.8-3.9 1.1 0 2.2.2 2.2.2v2.5h-1.2c-1.2 0-1.6.8-1.6 1.6V12h2.8l-.4 2.9h-2.3v7A10 10 0 0022 12z'],
                         ['name' => 'youtube', 'path' => 'M21.8 8.1a2.5 2.5 0 00-1.8-1.8C18.3 6 12 6 12 6s-6.3 0-8 .3A2.5 2.5 0 002.2 8.1 26 26 0 002 12a26 26 0 00.2 3.9 2.5 2.5 0 001.8 1.8c1.7.3 8 .3 8 .3s6.3 0 8-.3a2.5 2.5 0 001.8-1.8A26 26 0 0022 12a26 26 0 00-.2-3.9zM10 15V9l5.2 3-5.2 3z'],
                     ] as $social)
-                        <a href="#"
+                        <a href="{{ $social['name'] === 'instagram' ? 'https://www.instagram.com/smkn1_sebulunew?stkn=cWx2dmZxdWI3MzR2' : ($social['name'] === 'facebook' ? 'https://www.facebook.com/share/1Kkw7pge2j/' : 'https://youtube.com/@smkn1sebulu214?si=uDLpP0AEqYgnGZyU') }}" target="_blank" rel="noopener noreferrer" aria-label="{{ ucfirst($social['name']) }} {{ $schoolName ?? 'SMK Negeri 1 Sebulu' }}"
                            class="w-10 h-10 rounded-full bg-white/10 border border-white/10 hover:bg-skblue-500 hover:border-skblue-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-skblue-500/30 flex items-center justify-center transition-all duration-200">
-                            <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="{{ $social['path'] }}"/></svg>
+                            <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                @if($social['name'] === 'instagram')
+                                    <rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="currentColor" stroke-width="2"/>
+                                    <circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/>
+                                    <circle cx="17.5" cy="6.5" r="1"/>
+                                @else
+                                    <path d="{{ $social['path'] }}"/>
+                                @endif
+                            </svg>
                         </a>
                     @endforeach
                 </div>
