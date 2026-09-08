@@ -6,13 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Models\PPDB\Registration;
 use App\Models\PPDB\Verification;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class VerificationController extends Controller
 {
     public function index()
     {
-        $registrations = Registration::with(['applicant', 'verification'])
-            ->where('status', 'pending')
+        $registrations = Registration::with(['biodata', 'documents', 'verification'])
+            ->whereIn('status', ['submitted', 'documents_invalid'])
             ->latest()
             ->paginate(15);
 
@@ -29,7 +30,7 @@ class VerificationController extends Controller
         $verification = Verification::updateOrCreate(
             ['registration_id' => $registration->id],
             [
-                'verified_by' => auth()->id(),
+                'verified_by' => Auth::id(),
                 'status' => $data['status'],
                 'remarks' => $data['remarks'] ?? null,
                 'verified_at' => now(),
@@ -37,7 +38,9 @@ class VerificationController extends Controller
         );
 
         $registration->update([
-            'status' => $data['status'] === 'valid' ? 'verified' : 'rejected',
+            'status' => $data['status'] === 'valid'
+                ? 'documents_valid'
+                : 'documents_invalid',
         ]);
 
         return back()->with('success', 'Verifikasi berkas berhasil disimpan.');

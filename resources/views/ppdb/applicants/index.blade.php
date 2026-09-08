@@ -22,6 +22,7 @@
                         <th class="px-5 py-3 font-semibold">Nama</th>
                         <th class="px-5 py-3 font-semibold">Jurusan Pilihan</th>
                         <th class="px-5 py-3 font-semibold">No. HP</th>
+                        <th class="px-5 py-3 font-semibold">Berkas</th>
                         <th class="px-5 py-3 font-semibold">Status</th>
                         <th class="px-5 py-3 font-semibold text-right">Aksi</th>
                     </tr>
@@ -29,20 +30,44 @@
                 <tbody class="divide-y divide-skblue-50">
                     @forelse($applicants as $item)
                         <tr class="hover:bg-skblue-50/50 transition">
-                            <td class="px-5 py-3 text-slate-500 font-mono text-xs">{{ $item->registration_number }}</td>
-                            <td class="px-5 py-3 font-medium text-slate-700">{{ $item->full_name }}</td>
-                            <td class="px-5 py-3 text-slate-500">{{ $item->chosen_major }}</td>
-                            <td class="px-5 py-3 text-slate-500">{{ $item->phone }}</td>
-                            <td class="px-5 py-3">
-                                @php $status = $item->registration?->status ?? 'pending'; @endphp
-                                @php $statusMap = [
-                                    'pending' => ['Menunggu', 'bg-amber-50 text-amber-700'],
+                            @php
+                                $ppdbRegistration = $item->ppdbRegistration;
+                                $majorChoice = $ppdbRegistration?->majorChoices->first()?->major?->name;
+                                $phone = $item->phone
+                                    ?: ($ppdbRegistration?->parentData?->father_phone
+                                        ?: $ppdbRegistration?->parentData?->mother_phone);
+                                $status = $ppdbRegistration?->status ?? $item->registration?->status ?? 'pending';
+                                $statusMap = [
+                                    'draft' => ['Draft', 'bg-slate-100 text-slate-600'],
+                                    'submitted' => ['Menunggu', 'bg-amber-50 text-amber-700'],
+                                    'documents_invalid' => ['Berkas Ditolak', 'bg-red-50 text-red-700'],
                                     'verified' => ['Terverifikasi', 'bg-skblue-50 text-skblue-700'],
                                     'accepted' => ['Diterima', 'bg-green-50 text-green-700'],
                                     'rejected' => ['Ditolak', 'bg-red-50 text-red-700'],
-                                ]; @endphp
-                                <span class="inline-flex items-center rounded-full text-xs font-semibold px-2.5 py-1 {{ $statusMap[$status][1] }}">
-                                    {{ $statusMap[$status][0] }}
+                                    'pending' => ['Menunggu', 'bg-amber-50 text-amber-700'],
+                                ];
+                            @endphp
+                            <td class="px-5 py-3 text-slate-500 font-mono text-xs">{{ $item->registration_number }}</td>
+                            <td class="px-5 py-3 font-medium text-slate-700">{{ $item->full_name }}</td>
+                            <td class="px-5 py-3 text-slate-500">{{ $majorChoice ?: ($item->chosen_major ?: '—') }}</td>
+                            <td class="px-5 py-3 text-slate-500">{{ $phone ?: '—' }}</td>
+                            <td class="px-5 py-3 text-slate-500">
+                                @if ($ppdbRegistration?->documents->isNotEmpty())
+                                    <div class="flex flex-col gap-1">
+                                        @foreach ($ppdbRegistration->documents as $document)
+                                            <a href="{{ url('/storage/' . ltrim($document->file_path, '/')) }}" target="_blank" rel="noopener"
+                                               class="text-xs font-semibold text-skblue-600 hover:text-skblue-800 hover:underline">
+                                                {{ $document->document_type ?: $document->file_name }}
+                                            </a>
+                                        @endforeach
+                                    </div>
+                                @else
+                                    —
+                                @endif
+                            </td>
+                            <td class="px-5 py-3">
+                                <span class="inline-flex items-center rounded-full text-xs font-semibold px-2.5 py-1 {{ $statusMap[$status][1] ?? 'bg-slate-100 text-slate-600' }}">
+                                    {{ $statusMap[$status][0] ?? $status }}
                                 </span>
                             </td>
                             <td class="px-5 py-3 text-right">
@@ -55,7 +80,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="6" class="px-5 py-8 text-center text-slate-400 text-sm">Belum ada pendaftar.</td></tr>
+                        <tr><td colspan="7" class="px-5 py-8 text-center text-slate-400 text-sm">Belum ada pendaftar.</td></tr>
                     @endforelse
                 </tbody>
             </table>

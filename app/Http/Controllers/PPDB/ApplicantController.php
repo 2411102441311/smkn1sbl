@@ -11,7 +11,13 @@ class ApplicantController extends Controller
 {
     public function index(Request $request)
     {
-        $applicants = Applicant::with('registration')
+        $applicants = Applicant::with([
+            'registration',
+            'ppdbRegistration.biodata',
+            'ppdbRegistration.parentData',
+            'ppdbRegistration.documents',
+            'ppdbRegistration.majorChoices.major',
+        ])
             ->when($request->search, fn ($q) => $q->where('full_name', 'like', "%{$request->search}%"))
             ->latest()
             ->paginate(15);

@@ -47,6 +47,11 @@ class Registration extends Model
         return $this->hasMany(Document::class, 'registration_id');
     }
 
+    public function verification(): HasOne
+    {
+        return $this->hasOne(Verification::class, 'registration_id')->latestOfMany();
+    }
+
     public function reportCards(): HasMany
     {
         return $this->hasMany(ReportCard::class, 'registration_id');

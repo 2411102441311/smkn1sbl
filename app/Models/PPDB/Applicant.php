@@ -18,7 +18,12 @@ class Applicant extends Model
 
     public function registration(): HasOne
     {
-        return $this->hasOne(Registration::class);
+        return $this->hasOne(LegacyRegistration::class, 'applicant_id');
+    }
+
+    public function ppdbRegistration(): HasOne
+    {
+        return $this->hasOne(Registration::class, 'registration_number', 'registration_number');
     }
 
     public function documents(): HasMany
