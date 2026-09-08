@@ -71,12 +71,20 @@
                                 </span>
                             </td>
                             <td class="px-5 py-3 text-right">
-                                <form action="{{ route('admin.ppdb.applicants.destroy', $item) }}" method="POST" onsubmit="return confirm('Hapus data pendaftar ini?')" class="inline">
-                                    @csrf @method('DELETE')
-                                    <button type="submit" class="w-8 h-8 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 flex items-center justify-center transition ml-auto" title="Hapus">
-                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                    </button>
-                                </form>
+                                <div class="flex items-center justify-end gap-2">
+                                    @if (in_array($status, ['documents_invalid', 'rejected']) && $ppdbRegistration)
+                                        <a href="{{ route('admin.ppdb.applicants.edit', $ppdbRegistration) }}"
+                                           class="rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 px-3 py-2 text-xs font-semibold transition">
+                                            Edit & Ajukan Ulang
+                                        </a>
+                                    @endif
+                                    <form action="{{ route('admin.ppdb.applicants.destroy', $item) }}" method="POST" onsubmit="return confirm('Hapus data pendaftar ini?')" class="inline">
+                                        @csrf @method('DELETE')
+                                        <button type="submit" class="w-8 h-8 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 flex items-center justify-center transition" title="Hapus">
+                                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1v3M4 7h16"/></svg>
+                                        </button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                     @empty

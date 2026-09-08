@@ -5,6 +5,7 @@ namespace App\Http\Controllers\PPDB;
 use App\Http\Controllers\Controller;
 use App\Models\Major;
 use App\Models\PPDB\Applicant;
+use App\Models\PPDB\Registration;
 use Illuminate\Http\Request;
 
 class ApplicantController extends Controller
@@ -67,5 +68,63 @@ class ApplicantController extends Controller
     {
         $applicant->delete();
         return back()->with('success', 'Data pendaftar berhasil dihapus.');
+    }
+
+    public function editRejected(Registration $registration)
+    {
+        abort_unless(in_array($registration->status, ['documents_invalid', 'rejected']), 404);
+
+        $registration->load(['biodata', 'parentData', 'majorChoices.major']);
+        $majors = Major::orderBy('name')->get();
+
+        return view('ppdb.applicants.edit', compact('registration', 'majors'));
+    }
+
+    public function updateRejected(Request $request, Registration $registration)
+    {
+        abort_unless(in_array($registration->status, ['documents_invalid', 'rejected']), 404);
+
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'school_origin' => 'nullable|string|max:255',
+            'address' => 'nullable|string',
+            'father_phone' => 'nullable|string|max:30',
+            'mother_phone' => 'nullable|string|max:30',
+            'major_id' => 'required|exists:majors,id',
+        ]);
+
+        $registration->biodata()->updateOrCreate(
+            ['registration_id' => $registration->id],
+            [
+                'name' => $data['name'],
+                'school_origin' => $data['school_origin'] ?? null,
+                'address' => $data['address'] ?? null,
+            ]
+        );
+
+        $registration->parentData()->updateOrCreate(
+            ['registration_id' => $registration->id],
+            [
+                'father_phone' => $data['father_phone'] ?? null,
+                'mother_phone' => $data['mother_phone'] ?? null,
+            ]
+        );
+
+        $registration->majorChoices()->delete();
+        $registration->majorChoices()->create([
+            'major_id' => $data['major_id'],
+            'choice_order' => 1,
+        ]);
+
+        $registration->verification()->update([
+            'status' => 'pending',
+            'remarks' => null,
+            'verified_by' => null,
+            'verified_at' => null,
+        ]);
+        $registration->update(['status' => 'submitted']);
+
+        return redirect()->route('admin.ppdb.applicants.index')
+            ->with('success', 'Data diperbaiki dan diajukan ulang untuk verifikasi.');
     }
 }

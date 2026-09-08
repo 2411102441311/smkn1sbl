@@ -153,6 +153,8 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::prefix('ppdb')->name('ppdb.')->group(function () {
         Route::get('applicants', [ApplicantController::class, 'index'])->name('applicants.index');
         Route::delete('applicants/{applicant}', [ApplicantController::class, 'destroy'])->name('applicants.destroy');
+        Route::get('applicants/{registration}/edit', [ApplicantController::class, 'editRejected'])->name('applicants.edit');
+        Route::put('applicants/{registration}', [ApplicantController::class, 'updateRejected'])->name('applicants.update');
         Route::get('registrations', [RegistrationController::class, 'index'])->name('registrations.index');
         Route::put('registrations/{registration}', [RegistrationController::class, 'updateStatus'])->name('registrations.update');
         Route::delete('documents/{document}', [DocumentController::class, 'destroy'])->name('documents.destroy');

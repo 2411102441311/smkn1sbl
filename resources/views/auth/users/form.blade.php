@@ -56,8 +56,17 @@
 
                 <div>
                     <label for="password" class="block text-sm font-medium text-slate-600 mb-1">Password {{ isset($user) ? '(opsional)' : '' }}</label>
-                    <input id="password" type="password" name="password" {{ isset($user) ? '' : 'required' }} minlength="8"
-                           class="w-full rounded-lg border border-skblue-200 px-3 py-2.5 text-sm focus:ring-2 focus:ring-skblue-400 focus:outline-none">
+                    <div class="relative">
+                        <input id="password" type="password" name="password" {{ isset($user) ? '' : 'required' }} minlength="8"
+                               class="w-full rounded-lg border border-skblue-200 px-3 py-2.5 pr-11 text-sm focus:ring-2 focus:ring-skblue-400 focus:outline-none">
+                        <button type="button" id="togglePassword" aria-label="Tampilkan password"
+                                class="absolute inset-y-0 right-0 px-3 text-slate-400 hover:text-skblue-600 transition">
+                            <svg id="passwordEye" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                        </button>
+                    </div>
                     @error('password') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
 
@@ -75,4 +84,14 @@
             </form>
         </div>
     </div>
+
+    <script>
+        document.getElementById('togglePassword')?.addEventListener('click', function () {
+            const password = document.getElementById('password');
+            const isHidden = password.type === 'password';
+
+            password.type = isHidden ? 'text' : 'password';
+            this.setAttribute('aria-label', isHidden ? 'Sembunyikan password' : 'Tampilkan password');
+        });
+    </script>
 @endsection

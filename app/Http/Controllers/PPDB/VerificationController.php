@@ -13,7 +13,7 @@ class VerificationController extends Controller
     public function index()
     {
         $registrations = Registration::with(['biodata', 'documents', 'verification'])
-            ->whereIn('status', ['submitted', 'documents_invalid'])
+            ->where('status', 'submitted')
             ->latest()
             ->paginate(15);
 
