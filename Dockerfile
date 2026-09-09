@@ -1,6 +1,6 @@
 FROM php:8.2-cli-bookworm
 
-# System dependencies + Tesseract OCR + Node.js
+# System dependencies + Tesseract OCR + Node.js 22
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
@@ -14,8 +14,8 @@ RUN apt-get update && apt-get install -y \
     tesseract-ocr \
     tesseract-ocr-eng \
     tesseract-ocr-ind \
-    nodejs \
-    npm \
+    && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+    && apt-get install -y nodejs \
     && rm -rf /var/lib/apt/lists/*
 
 # PHP extensions
@@ -72,7 +72,7 @@ RUN php artisan view:clear || true
 ENV TESSERACT_PATH=/usr/bin/tesseract
 ENV TESSDATA_PATH=/usr/share/tesseract-ocr/5/tessdata
 
-# Render provides PORT automatically
+# Railway provides PORT automatically
 EXPOSE 10000
 
 CMD ["sh", "-c", "php artisan serve --host=0.0.0.0 --port=${PORT:-10000}"]
