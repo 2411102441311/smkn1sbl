@@ -889,65 +889,29 @@ class PpdbWizardController extends Controller
                     $activePeriod
                 ) {
 
-                    // =================================================
-                    // 1. BUAT APPLICANT
-                    // =================================================
-
-                    $biodata =
-                        $data['biodata'];
-
-                    $applicant =
-                        \App\Models\PPDB\Applicant::create([
-                            'full_name' =>
-                                $biodata['name']
-                                ?? '',
-
-                            'nisn' =>
-                                $biodata['nisn']
-                                ?? null,
-
-                            'email' =>
-                                $biodata['email']
-                                ?? null,
-
-                            'phone' =>
-                                $biodata['phone']
-                                ?? null,
-
-                            'address' =>
-                                $biodata['address']
-                                ?? null,
-
-                            'previous_school' =>
-                                $biodata['school_origin']
-                                ?? null,
-                        ]);
-
-                    // =================================================
-                    // 2. BUAT REGISTRATION
+                   // =================================================
+                    // 1. BUAT REGISTRATION
                     // =================================================
 
-                    // Periksa kembali di dalam transaction agar
-                    // pendaftaran tidak lolos jika periode ditutup
-                    // tepat saat proses submit berlangsung.
+                    $biodata = $data['biodata'];
+
+                    // Periksa kembali periode PPDB di dalam transaction.
                     $currentOpenPeriod = $this->openPpdbPeriod();
 
-                    if (!$currentOpenPeriod || $currentOpenPeriod->id !== $activePeriod->id) {
+                    if (
+                        !$currentOpenPeriod ||
+                        $currentOpenPeriod->id !== $activePeriod->id
+                    ) {
                         throw new \Exception(
                             'Periode PPDB sudah ditutup atau tidak lagi tersedia.'
                         );
                     }
 
                     $registration = Registration::create([
-                            'applicant_id' => $applicant->id,
-
-                            'registration_number' =>
-                                $applicant->registration_number,
-
-                            'period_id' => $currentOpenPeriod->id,
-
-                            'status' => 'submitted',
-                        ]);
+                        'user_id' => auth()->id(),
+                        'period_id' => $currentOpenPeriod->id,
+                        'status' => 'submitted',
+                    ]);
 
                     // =================================================
                     // 3. SIMPAN BIODATA
