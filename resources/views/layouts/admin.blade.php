@@ -89,19 +89,48 @@
                 </a>
             @endif
 
-            <p class="px-3.5 pt-5 pb-1 text-[10px] font-bold uppercase tracking-widest text-skblue-400/80">PPDB</p>
+            {{-- PPDB --}}
+                <p class="px-3.5 pt-5 pb-1 text-[10px] font-bold uppercase tracking-widest text-skblue-400/80">
+                    PPDB
+                </p>
 
-            <a href="{{ route('admin.ppdb.applicants.index') }}"
-               class="group flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium transition-all duration-300 {{ $navClass(request()->routeIs('admin.ppdb.applicants.*')) }}">
-                <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6 0a4 4 0 10-4-4"/></svg>
-                Pendaftar
-            </a>
-            <a href="{{ route('admin.ppdb.verification.index') }}"
-               class="group flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium transition-all duration-300 {{ $navClass(request()->routeIs('admin.ppdb.verification.*')) }}">
-                <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                Verifikasi Berkas
-            </a>
+                {{-- Pendaftar --}}
+                <a href="{{ route('admin.ppdb.applicants.index') }}"
+                class="group flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium transition-all duration-300 {{ $navClass(request()->routeIs('admin.ppdb.applicants.*')) }}">
 
+                    <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6 0a4 4 0 10-4-4"/>
+                    </svg>
+
+                    Pendaftar
+                </a>
+
+
+                {{-- Verifikasi Berkas --}}
+                <a href="{{ route('admin.ppdb.verification.index') }}"
+                class="group flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium transition-all duration-300 {{ $navClass(request()->routeIs('admin.ppdb.verification.*')) }}">
+
+                    <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+
+                    Verifikasi Berkas
+                </a>
+
+
+{{-- Periode PPDB --}}
+<a href="{{ route('admin.ppdb.periods.index') }}"
+   class="group flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium transition-all duration-300 {{ $navClass(request()->routeIs('admin.ppdb.periods.*')) }}">
+
+    <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round"
+              d="M8 2v4m8-4v4M3 10h18M5 5h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z"/>
+    </svg>
+
+    Periode PPDB
+</a>
             @if($isSuperAdmin)
                 <p class="px-3.5 pt-5 pb-1 text-[10px] font-bold uppercase tracking-widest text-skblue-400/80">Khusus Super Admin</p>
 

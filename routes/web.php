@@ -25,6 +25,7 @@ use App\Http\Controllers\PPDB\RegistrationController;
 use App\Http\Controllers\PPDB\DocumentController;
 use App\Http\Controllers\PPDB\VerificationController;
 use App\Http\Controllers\PPDB\PpdbWizardController;
+use App\Http\Controllers\PPDB\PpdbPeriodController;
 
 use App\Http\Controllers\ThemeManager\ThemeController;
 use App\Http\Controllers\ThemeManager\ThemeScheduleController;
@@ -160,6 +161,7 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
         Route::delete('documents/{document}', [DocumentController::class, 'destroy'])->name('documents.destroy');
         Route::get('verification', [VerificationController::class, 'index'])->name('verification.index');
         Route::post('verification/{registration}', [VerificationController::class, 'store'])->name('verification.store');
+        Route::resource('periods', PpdbPeriodController::class)->only(['index', 'store', 'update', 'destroy']);
         
     });
 

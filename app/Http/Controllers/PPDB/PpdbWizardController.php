@@ -41,12 +41,52 @@ class PpdbWizardController extends Controller
         ]);
     }
 
+    /**
+     * Ambil periode PPDB yang benar-benar sedang dibuka.
+     *
+     * Syarat:
+     * - is_active = true
+     * - tanggal mulai sudah tiba (atau tidak ditentukan)
+     * - tanggal berakhir belum lewat (atau tidak ditentukan)
+     */
+    protected function openPpdbPeriod(): ?PpdbPeriod
+    {
+        $today = now()->toDateString();
+
+        return PpdbPeriod::query()
+            ->where('is_active', true)
+            ->where(function ($query) use ($today) {
+                $query->whereNull('start_date')
+                    ->orWhereDate('start_date', '<=', $today);
+            })
+            ->where(function ($query) use ($today) {
+                $query->whereNull('end_date')
+                    ->orWhereDate('end_date', '>=', $today);
+            })
+            ->orderByDesc('start_date')
+            ->first();
+    }
+
+    /**
+     * Pastikan pendaftaran PPDB sedang dibuka.
+     */
+    protected function registrationIsOpen()
+    {
+        return $this->openPpdbPeriod();
+    }
+
     // =========================================================
     // LANGKAH 1: BIODATA
     // =========================================================
 
     public function biodataForm()
     {
+        if (!$this->registrationIsOpen()) {
+            return response()->view('ppdb.wizard.ppdb-closed', [
+                'message' => 'Pendaftaran PPDB sedang ditutup atau belum dibuka.',
+            ], 403);
+        }
+
         return view(
             'ppdb.wizard.step1-biodata',
             [
@@ -57,6 +97,12 @@ class PpdbWizardController extends Controller
 
     public function biodataStore(Request $request)
     {
+        if (!$this->registrationIsOpen()) {
+            return response()->view('ppdb.wizard.ppdb-closed', [
+                'message' => 'Pendaftaran PPDB sedang ditutup atau belum dibuka.',
+            ], 403);
+        }
+
         $data = $request->validate([
             'nik' => 'nullable|string|max:20',
             'nisn' => 'nullable|string|max:20',
@@ -787,6 +833,16 @@ class PpdbWizardController extends Controller
         Request $request,
         SawService $sawService
     ) {
+        $activePeriod = $this->registrationIsOpen();
+
+        if (!$activePeriod) {
+            session()->forget($this->sessionKey);
+
+            return response()->view('ppdb.wizard.ppdb-closed', [
+                'message' => 'Pendaftaran PPDB sudah ditutup atau periode pendaftaran telah berakhir.',
+            ], 403);
+        }
+
         $validated =
             $request->validate([
                 'major_choice_1' =>
@@ -829,7 +885,8 @@ class PpdbWizardController extends Controller
                 function () use (
                     $data,
                     $validated,
-                    $sawService
+                    $sawService,
+                    $activePeriod
                 ) {
 
                     // =================================================
@@ -870,19 +927,24 @@ class PpdbWizardController extends Controller
                     // 2. BUAT REGISTRATION
                     // =================================================
 
-                    $activePeriod = PpdbPeriod::where('is_active', true)->first();
+                    // Periksa kembali di dalam transaction agar
+                    // pendaftaran tidak lolos jika periode ditutup
+                    // tepat saat proses submit berlangsung.
+                    $currentOpenPeriod = $this->openPpdbPeriod();
 
-                        if (!$activePeriod) {
-                            throw new \Exception('Periode PPDB aktif belum tersedia.');
-                        }
+                    if (!$currentOpenPeriod || $currentOpenPeriod->id !== $activePeriod->id) {
+                        throw new \Exception(
+                            'Periode PPDB sudah ditutup atau tidak lagi tersedia.'
+                        );
+                    }
 
-                        $registration = Registration::create([
+                    $registration = Registration::create([
                             'applicant_id' => $applicant->id,
 
                             'registration_number' =>
                                 $applicant->registration_number,
 
-                            'period_id' => $activePeriod->id,
+                            'period_id' => $currentOpenPeriod->id,
 
                             'status' => 'submitted',
                         ]);
