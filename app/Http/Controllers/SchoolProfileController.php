@@ -103,14 +103,14 @@ class SchoolProfileController extends Controller
             ['name' => 'Pramuka', 'icon' => 'flag'],
             ['name' => 'OSIS', 'icon' => 'users'],
             ['name' => 'Futsal', 'icon' => 'futbol'],
-            ['name' => 'English Club', 'icon' => 'futbol'],
-            ['name' => 'Paduan Suara', 'icon' => 'futbol'],
-            ['name' => 'Atletik', 'icon' => 'futbol'],
-            ['name' => 'Habsyi', 'icon' => 'futbol'],
-            ['name' => 'Tari', 'icon' => 'futbol'],
-            // ['name' => 'Basket', 'icon' => 'basketball'],
-            // ['name' => 'Paskibra', 'icon' => 'flag'],
-            ['name' => 'IT Club', 'icon' => 'book'],
+            ['name' => 'English Club', 'icon' => 'language'],
+            ['name' => 'Paduan Suara', 'icon' => 'music'],
+            ['name' => 'Atletik', 'icon' => 'runner'],
+            ['name' => 'Habsyi', 'icon' => 'mosque'],
+            ['name' => 'Tari', 'icon' => 'mask-theater'],
+            
+            ['name' => 'Paskas', 'icon' => 'flag'],
+            ['name' => 'IT Club', 'icon' => 'laptop-code'],
             ['name' => 'PMR', 'icon' => 'heart'],
            
         ];

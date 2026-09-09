@@ -39,11 +39,9 @@
                   fixed inset-y-0 left-0 z-50 -translate-x-full transition-transform duration-300 ease-out
                   md:static md:translate-x-0">
 
-        <div class="px-6 py-5 border-b border-white/10 flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-skblue-400 to-skblue-600 shadow-[0_0_20px_rgba(96,165,250,0.6)] flex items-center justify-center shrink-0">
-                <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422A12.083 12.083 0 0121 14.09V19a1 1 0 01-1 1H4a1 1 0 01-1-1v-4.91a12.083 12.083 0 012.84-3.512L12 14z"/>
-                </svg>
+            <div class="px-6 py-5 border-b border-white/10 flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-white shadow-[0_0_20px_rgba(96,165,250,0.4)] flex items-center justify-center shrink-0 p-1">
+                    <img src="{{ asset('images/logo-smkn1sbl2.png') }}" alt="Logo Sekolah" class="w-full h-full object-contain">
             </div>
             <div class="min-w-0">
                 <p class="font-bold text-white leading-tight">Panel Admin</p>

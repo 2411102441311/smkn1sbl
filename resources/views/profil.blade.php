@@ -235,9 +235,62 @@
                 @foreach($extracurriculars as $eskul)
                     <div class="bg-white rounded-2xl border border-skblue-100 p-6 text-center hover:border-skblue-300 hover:shadow-soft hover:-translate-y-1 transition-all duration-200 reveal-zoom">
                         <div class="w-12 h-12 rounded-xl bg-skblue-600 mx-auto mb-3 flex items-center justify-center">
-                            <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v8m-4-4h8m-9 8h10a2 2 0 002-2V6a2 2 0 00-2-2H7a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                            </svg>
+                            @switch($eskul['icon'] ?? 'plus')
+                                @case('flag')
+                                    <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 21V5.5A1.5 1.5 0 014.5 4H12l1 2h7v10h-7l-1-2H4.5A1.5 1.5 0 013 14.5V21zm0-8.5h9.5"/>
+                                    </svg>
+                                    @break
+                                @case('users')
+                                    <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M16 19v-1a4 4 0 00-4-4H8a4 4 0 00-4 4v1M12 11a4 4 0 100-8 4 4 0 000 8zm8 8v-1a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
+                                    </svg>
+                                    @break
+                                @case('futbol')
+                                    <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 0c2.5 2 4.5 5.2 4.5 8.5S14.5 19.9 12 22c-2.5-2.1-4.5-5.3-4.5-8.5S9.5 4.1 12 2zm-7 7.5h14M5 14.5h14"/>
+                                    </svg>
+                                    @break
+                                @case('language')
+                                    <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 5h7v7H4zm9 0h7v7h-7zm-9 9h7v7H4zm9 0h7v7h-7zM9 5v14m6-14v14M5 9h5m9 0h-5m-9 6h5m9 0h-5"/>
+                                    </svg>
+                                    @break
+                                @case('music')
+                                    <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 18V6l10-2v12M9 18a3 3 0 11-6 0 3 3 0 016 0zm10-2a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    </svg>
+                                    @break
+                                @case('runner')
+                                    <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 5a2 2 0 100 4 2 2 0 000-4zm-4 9l2-3 3 2 4 1m-5 0l-1 4m1-4l4-4M7 18a3 3 0 100-6 3 3 0 000 6z"/>
+                                    </svg>
+                                    @break
+                                @case('mosque')
+                                    <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 20h16M7 20V9l5-4 5 4v11M10 12h4M8 16h8M10 8h4"/>
+                                    </svg>
+                                    @break
+                                @case('mask-theater')
+                                    <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 9a3 3 0 100-6 3 3 0 000 6zm8 0a3 3 0 100-6 3 3 0 000 6zM5 18c1-2 3-3 7-3s6 1 7 3v2H5v-2zm7-6a4 4 0 100-8 4 4 0 000 8z"/>
+                                    </svg>
+                                    @break
+                                @case('laptop-code')
+                                    <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 18h6m-7 0a2 2 0 01-2-2V7a2 2 0 012-2h10a2 2 0 012 2v9a2 2 0 01-2 2m-6-3l-3-3m3 3l3-3m-3 3h.01M9 13h.01M15 13h.01M15 9h.01"/>
+                                    </svg>
+                                    @break
+                                @case('heart')
+                                    <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M12 21s-8.5-4.35-10.2-8.45C.78 9.86 2.1 4.5 6.7 4.5c2.2 0 3.5 1.2 4.3 2.2.8-1 2.1-2.2 4.3-2.2 4.6 0 5.9 5.36 5.1 8.05C20.5 16.65 12 21 12 21z"/>
+                                    </svg>
+                                    @break
+                                @default
+                                    <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v8m-4-4h8m-9 8h10a2 2 0 002-2V6a2 2 0 00-2-2H7a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                    </svg>
+                            @endswitch
                         </div>
                         <p class="font-display font-semibold text-slate-800 text-sm">{{ $eskul['name'] }}</p>
                     </div>

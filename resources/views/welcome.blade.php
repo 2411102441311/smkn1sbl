@@ -249,8 +249,8 @@
 
         <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             @foreach([
-                ['slug' => 'kelas', 'icon' => 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2M5 21H3m9-13h.01M9 8h.01M9 12h.01M12 12h.01M9 16h.01M12 16h.01M15 12h.01M15 16h.01', 'title' => 'Ruang Kelas Modern', 'desc' => 'Dilengkapi proyektor & AC di setiap ruang belajar.'],
-                ['slug' => 'lab', 'icon' => 'M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z', 'title' => 'Laboratorium Praktik', 'desc' => 'Lab komputer, jaringan, dan bengkel sesuai standar industri.'],
+                ['slug' => 'kelas', 'icon' => 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2M5 21H3m9-13h.01M9 8h.01M9 12h.01M12 12h.01M9 16h.01M12 16h.01M15 12h.01M15 16h.01', 'title' => 'Ruang Kelas Modern', 'desc' => 'Dilengkapi proyektor & AC di setiap ruang lab belajar.'],
+                ['slug' => 'lab', 'icon' => 'M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z', 'title' => 'Laboratorium Praktik', 'desc' => 'Lab komputer dan jaringan sesuai standar industri.'],
                 ['slug' => 'guru', 'icon' => 'M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6 0a4 4 0 10-4-4', 'title' => 'Guru Berpengalaman', 'desc' => 'Tenaga pengajar profesional dan bersertifikasi kompetensi.'],
                 ['slug' => 'industri', 'icon' => 'M13 10V3L4 14h7v7l9-11h-7z', 'title' => 'Kerja Sama Industri', 'desc' => 'Program magang & penyaluran kerja bersama mitra industri.'],
             ] as $feature)

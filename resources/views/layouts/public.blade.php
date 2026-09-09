@@ -109,7 +109,7 @@
                     {{ \App\Models\CMS\Setting::get('school_phone', '(0895) 3031-9864') }}
                 </span>
             </div>
-            <p class="hidden md:block">Akreditasi A &middot; Sekolah Berbasis Kompetensi</p>
+            <p class="hidden md:block">Akreditasi B &middot; Sekolah Berbasis Kompetensi</p>
         </div>
     </div>
 
@@ -118,7 +118,7 @@
         <div class="marquee-track flex items-center gap-10 whitespace-nowrap">
             @php
                 $tickerItems = [
-                    ['icon' => '⭐', 'text' => 'Terakreditasi "A" Unggul oleh BAN-SM'],
+                    ['icon' => '⭐', 'text' => 'Terakreditasi "B" oleh Badan Akreditasi Nasional Sekolah/Madrasah (BAN-SM)'],
                     ['icon' => '✅', 'text' => '3 Program Keahlian Siap Kerja & Wirausaha'],
                     ['icon' => '🔥', 'text' => 'Info Terbaru: Pendaftaran PPDB Sedang Dibuka'],
                     ['icon' => '🤝', 'text' => 'Bermitra dengan Dunia Usaha & Industri (DUDI)'],
