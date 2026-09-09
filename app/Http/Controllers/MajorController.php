@@ -56,7 +56,7 @@ class MajorController extends Controller
             [
                 'slug' => 'atp',
                 'code' => 'ATP',
-                'name' => 'Agribisnis Tanaman Perkebunan',
+                'name' => 'Agrobisnis Tanaman Perkebunan',
                 'desc' => 'Pengelolaan dan pengembangan tanaman perkebunan, termasuk praktik pertanian berkelanjutan.',
                 'icon' => 'leaf',
                 'logo' => 'images/jurusan/atp.png',
