@@ -47,7 +47,7 @@ RUN composer install \
     --prefer-dist \
     --optimize-autoloader
 
-# Build frontend assets if package.json exists
+# Build frontend assets
 RUN if [ -f package.json ]; then \
         npm install && npm run build; \
     fi
