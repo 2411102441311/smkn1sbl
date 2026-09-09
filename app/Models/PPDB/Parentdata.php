@@ -14,8 +14,30 @@ class ParentData extends Model
 
     protected $fillable = [
         'registration_id',
-        'father_name', 'father_nik', 'father_phone', 'father_occupation',
-        'mother_name', 'mother_nik', 'mother_phone', 'mother_occupation',
+
+        // Data Ayah
+        'father_name',
+        'father_nik',
+        'father_phone',
+        'father_occupation',
+
+        // Data Ibu
+        'mother_name',
+        'mother_nik',
+        'mother_phone',
+        'mother_occupation',
+
+        // Data Wali
+        'has_guardian',
+        'guardian_relationship',
+        'guardian_name',
+        'guardian_nik',
+        'guardian_phone',
+        'guardian_occupation',
+    ];
+
+    protected $casts = [
+        'has_guardian' => 'boolean',
     ];
 
     public function registration(): BelongsTo

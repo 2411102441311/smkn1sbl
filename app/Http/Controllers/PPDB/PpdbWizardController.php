@@ -11,6 +11,7 @@ use App\Services\SawService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use App\Models\PpdbPeriod;
 
 class PpdbWizardController extends Controller
 {
@@ -58,25 +59,30 @@ class PpdbWizardController extends Controller
     {
         $data = $request->validate([
             'nik' => 'nullable|string|max:20',
+            'nisn' => 'nullable|string|max:20',
             'family_card_number' => 'nullable|string|max:20',
+            'phone_number' => 'nullable|string|max:30',
             'name' => 'required|string|max:255',
             'place_of_birth' => 'nullable|string|max:100',
             'date_of_birth' => 'nullable|date',
             'gender' => 'nullable|in:L,P',
+            'height_cm' => 'nullable|numeric|min:0|max:250',
+            'weight_kg' => 'nullable|numeric|min:0|max:300',
             'religion' => 'nullable|string|max:50',
             'address' => 'nullable|string',
             'school_origin' => 'nullable|string|max:255',
+            'has_kip' => 'nullable|boolean',
+            'kip_number' => 'nullable|required_if:has_kip,1|string|max:30',
         ]);
+
+        $data['has_kip'] = $request->boolean('has_kip');
 
         $this->putWizardData([
             'biodata' => $data,
         ]);
 
-        return redirect()->route(
-            'ppdb.wizard.parents'
-        );
+        return redirect()->route('ppdb.wizard.parents');
     }
-
     // =========================================================
     // LANGKAH 2: DATA ORANG TUA
     // =========================================================
@@ -110,21 +116,82 @@ class PpdbWizardController extends Controller
     public function parentsStore(Request $request)
     {
         $data = $request->validate([
+            // =========================
+            // DATA AYAH
+            // =========================
             'father_name' => 'nullable|string|max:255',
+            'father_nik' => 'nullable|string|max:20',
             'father_phone' => 'nullable|string|max:30',
             'father_occupation' => 'nullable|string|max:100',
+
+            // =========================
+            // DATA IBU
+            // =========================
             'mother_name' => 'nullable|string|max:255',
+            'mother_nik' => 'nullable|string|max:20',
             'mother_phone' => 'nullable|string|max:30',
             'mother_occupation' => 'nullable|string|max:100',
+
+            // =========================
+            // DATA WALI
+            // =========================
+            'has_guardian' => 'nullable|boolean',
+
+            'guardian_relationship' => [
+                'nullable',
+                'string',
+                'max:50',
+                'required_if:has_guardian,1',
+            ],
+
+            'guardian_name' => [
+                'nullable',
+                'string',
+                'max:255',
+                'required_if:has_guardian,1',
+            ],
+
+            'guardian_nik' => [
+                'nullable',
+                'string',
+                'max:20',
+                'required_if:has_guardian,1',
+            ],
+
+            'guardian_phone' => [
+                'nullable',
+                'string',
+                'max:30',
+                'required_if:has_guardian,1',
+            ],
+
+            'guardian_occupation' => [
+                'nullable',
+                'string',
+                'max:100',
+                'required_if:has_guardian,1',
+            ],
         ]);
 
+        // Checkbox menghasilkan true/false.
+        $data['has_guardian'] = $request->boolean('has_guardian');
+
+        // Kalau tidak menggunakan wali,
+        // pastikan data wali dikosongkan.
+        if (!$data['has_guardian']) {
+            $data['guardian_relationship'] = null;
+            $data['guardian_name'] = null;
+            $data['guardian_nik'] = null;
+            $data['guardian_phone'] = null;
+            $data['guardian_occupation'] = null;
+        }
+
+        // Simpan seluruh data ke session wizard.
         $this->putWizardData([
             'parents' => $data,
         ]);
 
-        return redirect()->route(
-            'ppdb.wizard.documents'
-        );
+        return redirect()->route('ppdb.wizard.documents');
     }
 
     // =========================================================
@@ -803,16 +870,21 @@ class PpdbWizardController extends Controller
                     // 2. BUAT REGISTRATION
                     // =================================================
 
-                    $registration =
-                        Registration::create([
-                            'applicant_id' =>
-                                $applicant->id,
+                    $activePeriod = PpdbPeriod::where('is_active', true)->first();
+
+                        if (!$activePeriod) {
+                            throw new \Exception('Periode PPDB aktif belum tersedia.');
+                        }
+
+                        $registration = Registration::create([
+                            'applicant_id' => $applicant->id,
 
                             'registration_number' =>
                                 $applicant->registration_number,
 
-                            'status' =>
-                                'submitted',
+                            'period_id' => $activePeriod->id,
+
+                            'status' => 'submitted',
                         ]);
 
                     // =================================================

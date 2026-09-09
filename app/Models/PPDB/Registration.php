@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use App\Models\User;
+use App\Models\PpdbPeriod;
 
 class Registration extends Model
 {
@@ -15,7 +16,12 @@ class Registration extends Model
 
     protected $table = 'ppdb_registrations';
 
-    protected $fillable = ['registration_number', 'user_id', 'status'];
+    protected $fillable = [
+        'registration_number',
+        'user_id',
+        'period_id',
+        'status',
+    ];
 
     protected static function booted()
     {
@@ -30,6 +36,11 @@ class Registration extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function period(): BelongsTo
+    {
+        return $this->belongsTo(PpdbPeriod::class, 'period_id');
     }
 
     public function biodata(): HasOne

@@ -15,7 +15,9 @@ class Biodata extends Model
     protected $fillable = [
         'registration_id',
         'nik',
+        'nisn',
         'family_card_number',
+        'phone_number',
         'name',
         'place_of_birth',
         'date_of_birth',
