@@ -131,38 +131,206 @@
     <div class="h-10 md:h-16"></div>
 
     {{-- ============ PENGUMUMAN ============ --}}
-    @if ($announcements->isNotEmpty())
-    <section id="pengumuman" class="max-w-7xl mx-auto px-6 py-6">
-        <div class="bg-skblue-50 border border-skblue-100 rounded-2xl p-5 flex flex-col md:flex-row gap-4 md:items-center reveal">
-            <span class="shrink-0 text-xs font-bold uppercase tracking-wide text-white bg-skblue-600 rounded-full px-3 py-1">Pengumuman</span>
-            <div class="flex-1 flex flex-wrap gap-x-3 gap-y-2 text-sm text-skblue-900">
+    @if(
+        ($announcements->isNotEmpty())
+        || !empty($ppdbPeriod)
+        || !empty($ppdbUpcomingPeriod)
+        || !empty($ppdbEndedPeriod)
+    )
+    <section id="pengumuman" class="max-w-7xl mx-auto px-6 py-8">
+        <div class="bg-skblue-50 border border-skblue-100 rounded-2xl p-5 md:p-6 reveal">
+
+            <div class="flex items-center gap-3 mb-4">
+                <span class="w-10 h-10 rounded-xl bg-skblue-600 text-white flex items-center justify-center shrink-0">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                    </svg>
+                </span>
+
+                <div>
+                    <p class="text-xs font-bold uppercase tracking-widest text-skblue-600">
+                        Informasi Terbaru
+                    </p>
+                    <h2 class="font-display font-bold text-xl text-skblue-900">
+                        Pengumuman
+                    </h2>
+                </div>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-3">
+
+                {{-- PPDB otomatis --}}
+                @if(!empty($ppdbPeriod))
+                    <div class="group bg-white border border-green-200 rounded-xl p-4 hover:shadow-sm transition">
+                        <div class="flex items-start gap-3">
+                            <span class="w-9 h-9 rounded-lg bg-green-100 text-green-600 flex items-center justify-center shrink-0">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </span>
+
+                            <div class="min-w-0">
+                                <span class="inline-flex px-2.5 py-1 rounded-full bg-green-100 text-green-700 text-[11px] font-bold uppercase tracking-wide mb-2">
+                                    PPDB Dibuka
+                                </span>
+
+                                <h3 class="font-display font-bold text-slate-800 leading-snug">
+                                    Pendaftaran PPDB {{ $ppdbPeriod->name }}
+                                </h3>
+
+                                <p class="text-xs text-slate-500 mt-1">
+                                    {{ $ppdbPeriod->start_date?->translatedFormat('d F Y') ?? '-' }}
+                                    —
+                                    {{ $ppdbPeriod->end_date?->translatedFormat('d F Y') ?? '-' }}
+                                </p>
+
+                                <p class="text-sm text-slate-600 mt-2 leading-relaxed">
+                                    Pendaftaran peserta didik baru sedang dibuka.
+                                </p>
+
+                                <a href="{{ route('ppdb.applicants.create') }}"
+                                   class="inline-flex items-center gap-1.5 mt-3 text-xs font-semibold text-skblue-600 hover:text-skblue-800">
+                                    Daftar Sekarang
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                                    </svg>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                @elseif(!empty($ppdbUpcomingPeriod))
+                    <div class="group bg-white border border-blue-200 rounded-xl p-4 hover:shadow-sm transition">
+                        <div class="flex items-start gap-3">
+                            <span class="w-9 h-9 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                          d="M12 8v4l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </span>
+
+                            <div class="min-w-0">
+                                <span class="inline-flex px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 text-[11px] font-bold uppercase tracking-wide mb-2">
+                                    Akan Dibuka
+                                </span>
+
+                                <h3 class="font-display font-bold text-slate-800 leading-snug">
+                                    Pendaftaran PPDB {{ $ppdbUpcomingPeriod->name }}
+                                </h3>
+
+                                <p class="text-xs text-slate-500 mt-1">
+                                    {{ $ppdbUpcomingPeriod->start_date?->translatedFormat('d F Y') ?? '-' }}
+                                    —
+                                    {{ $ppdbUpcomingPeriod->end_date?->translatedFormat('d F Y') ?? '-' }}
+                                </p>
+
+                                <p class="text-sm text-slate-600 mt-2 leading-relaxed">
+                                    Pendaftaran PPDB akan dibuka sesuai jadwal yang telah ditentukan.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                @elseif(!empty($ppdbEndedPeriod))
+                    <div class="group bg-white border border-slate-200 rounded-xl p-4">
+                        <div class="flex items-start gap-3">
+                            <span class="w-9 h-9 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center shrink-0">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                          d="M12 8v4m0 4h.01M5.07 19h13.86c1.54 0 2.5-1.67 1.73-3L13.73 4a2 2 0 00-3.46 0L3.34 16c-.77 1.33.19 3 1.73 3z"/>
+                                </svg>
+                            </span>
+
+                            <div class="min-w-0">
+                                <span class="inline-flex px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-[11px] font-bold uppercase tracking-wide mb-2">
+                                    PPDB Berakhir
+                                </span>
+
+                                <h3 class="font-display font-bold text-slate-800 leading-snug">
+                                    Pendaftaran PPDB {{ $ppdbEndedPeriod->name }}
+                                </h3>
+
+                                <p class="text-xs text-slate-500 mt-1">
+                                    Berakhir {{ $ppdbEndedPeriod->end_date?->translatedFormat('d F Y') ?? '-' }}
+                                </p>
+
+                                <p class="text-sm text-slate-600 mt-2 leading-relaxed">
+                                    Periode pendaftaran tersebut telah berakhir.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
+                {{-- Pengumuman manual --}}
                 @foreach($announcements as $a)
                     <button type="button"
                             onclick="openPengumumanModal(this)"
                             data-title="{{ $a->title }}"
                             data-body="{{ $a->body }}"
                             data-tanggal="{{ $a->start_date->translatedFormat('d M Y') }}{{ $a->end_date ? ' – '.$a->end_date->translatedFormat('d M Y') : '' }}"
-                            class="inline-flex items-center gap-1.5 rounded-full bg-white hover:bg-skblue-600 hover:text-white border border-skblue-100 hover:border-skblue-600 px-3 py-1.5 transition-all duration-200 cursor-pointer">
-                        📌 {{ $a->title }}
+                            class="group text-left bg-white border border-skblue-100 rounded-xl p-4 hover:border-skblue-300 hover:shadow-sm transition">
+
+                        <div class="flex items-start gap-3">
+                            <span class="w-9 h-9 rounded-lg bg-skblue-100 text-skblue-600 flex items-center justify-center shrink-0">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                          d="M13 16h-1v-4h-1m1-4h.01M12 22a10 10 0 100-20 10 10 0 000 20z"/>
+                                </svg>
+                            </span>
+
+                            <div class="min-w-0">
+                                <span class="inline-flex px-2.5 py-1 rounded-full bg-skblue-50 text-skblue-600 text-[11px] font-bold uppercase tracking-wide mb-2">
+                                    Pengumuman
+                                </span>
+
+                                <h3 class="font-display font-bold text-slate-800 leading-snug group-hover:text-skblue-700 transition">
+                                    {{ $a->title }}
+                                </h3>
+
+                                <p class="text-xs text-slate-500 mt-1">
+                                    {{ $a->start_date->translatedFormat('d M Y') }}
+                                    @if($a->end_date)
+                                        – {{ $a->end_date->translatedFormat('d M Y') }}
+                                    @endif
+                                </p>
+
+                                <p class="text-xs text-skblue-600 font-semibold mt-2">
+                                    Klik untuk melihat detail →
+                                </p>
+                            </div>
+                        </div>
                     </button>
                 @endforeach
+
             </div>
         </div>
     </section>
- 
-    {{-- Modal buat lihat isi lengkap pengumuman pas badge-nya diklik --}}
+
+    {{-- Modal detail pengumuman manual --}}
     <div id="pengumumanModal"
          class="hidden fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm items-center justify-center p-4"
          onclick="if(event.target === this) closePengumumanModal()">
         <div class="max-w-md w-full bg-white rounded-2xl shadow-2xl p-6 relative">
             <button type="button" onclick="closePengumumanModal()"
                     class="absolute top-4 right-4 w-8 h-8 rounded-full bg-skblue-50 hover:bg-skblue-100 text-skblue-600 flex items-center justify-center transition">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
             </button>
-            <span class="inline-block text-xs font-bold uppercase tracking-wide text-white bg-skblue-600 rounded-full px-3 py-1 mb-3">Pengumuman</span>
-            <h3 id="pengumumanModalTitle" class="font-display font-bold text-lg text-slate-800 mb-2 pr-8"></h3>
-            <p id="pengumumanModalTanggal" class="text-xs text-skblue-500 font-medium mb-3"></p>
-            <p id="pengumumanModalBody" class="text-sm text-slate-600 leading-relaxed"></p>
+
+            <span class="inline-block text-xs font-bold uppercase tracking-wide text-white bg-skblue-600 rounded-full px-3 py-1 mb-3">
+                Pengumuman
+            </span>
+
+            <h3 id="pengumumanModalTitle"
+                class="font-display font-bold text-lg text-slate-800 mb-2 pr-8"></h3>
+
+            <p id="pengumumanModalTanggal"
+               class="text-xs text-skblue-500 font-medium mb-3"></p>
+
+            <p id="pengumumanModalBody"
+               class="text-sm text-slate-600 leading-relaxed"></p>
         </div>
     </div>
     @endif
