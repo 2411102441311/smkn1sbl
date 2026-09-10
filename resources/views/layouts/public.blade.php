@@ -44,6 +44,11 @@
         }
     </script>
     <style>
+        html, body {
+        overflow-x: hidden;
+        max-width: 100vw;
+        }
+        
         .bg-noise { background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,.12) 1px, transparent 0); background-size: 22px 22px; }
 
         /* ===== Animasi scroll reveal: hilang lalu muncul saat di-scroll ===== */
@@ -94,7 +99,7 @@
     </style>
     @stack('styles')
 </head>
-<body class="font-body bg-white text-slate-700 antialiased">
+<body class="font-body bg-white text-slate-700 antialiased overflow-x-hidden">
 
     {{-- ============ TOPBAR (kontak, diam) ============ --}}
     <div class="bg-skblue-900 text-skblue-100 text-[10px] md:text-xs">

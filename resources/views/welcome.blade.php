@@ -71,8 +71,8 @@
     {{-- Bingkai mengambang (floating glass card) — dipertahankan, tapi sekarang pakai margin negatif
          (bukan absolute) supaya tinggi kartu selalu dihitung otomatis oleh browser dan TIDAK
          akan pernah nabrak/tumpang tindih dengan section di bawahnya, di layar berapapun (termasuk HP). --}}
-    <div class="relative z-10 px-6 mt-6 xl:-mt-20">
-        <div class="max-w-4xl mx-auto bg-white/90 md:bg-white/80 backdrop-blur-xl border border-white/60 rounded-3xl shadow-2xl shadow-skblue-900/20 px-5 py-6 md:px-10 md:py-8 grid sm:grid-cols-3 gap-3 sm:gap-4">
+    <div class="relative z-10 px-4 sm:px-6 mt-4 md:mt-6 xl:-mt-20">
+        <div class="max-w-4xl mx-auto bg-white/90 md:bg-white/80 backdrop-blur-xl border border-white/60 rounded-3xl shadow-2xl shadow-skblue-900/20 px-4 py-4 md:px-10 md:py-8 grid sm:grid-cols-3 gap-2 sm:gap-4">
 
             <a href="{{ route('ppdb.applicants.create') }}"
                class="group flex flex-col items-center text-center gap-2 rounded-2xl px-4 py-4 sm:py-5 hover:bg-skblue-50 transition">
@@ -128,7 +128,7 @@
         </div>
     </div>
 
-    <div class="h-10 md:h-16"></div>
+    <div class="h-5 md:h-16"></div>
 
     {{-- ============ PENGUMUMAN ============ --}}
     @if(
