@@ -386,7 +386,7 @@
                 </div>
 
                 <div class="relative rounded-3xl overflow-hidden shadow-soft aspect-[4/5] max-w-md mx-auto bg-skblue-100">
-                    <img src="{{ !empty($principal['photo']) ? asset('storage/'.$principal['photo']) : asset('images/kepala-sekolah.jpg') }}"
+                    <img src="{{ !empty($principal['photo']) ? asset('storage/'.$principal['photo']) : asset('images/kepala-sekolah.png') }}"
                          alt="Kepala {{ $schoolName ?? 'SMK Negeri 1 Sebulu' }}"
                          class="w-full h-full object-cover object-top">
                 </div>
